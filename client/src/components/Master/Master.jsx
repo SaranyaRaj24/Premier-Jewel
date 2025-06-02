@@ -23,7 +23,8 @@ const Master = () => {
     setShowGoldsmithDetails(false);
     setShowAddItemsDetails(false);
     setShowJewelStock(false);
-    setShowCashGold(false);
+    setShowCashGold(false)
+
   };
 
   const handleAddGoldsmithClick = () => {
