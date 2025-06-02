@@ -1,19 +1,20 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MasterCustomer from "./Mastercustomer";
 import "./Master.css";
 import Mastergoldsmith from "./Mastergoldsmith";
 import Masteradditems from "./Masteradditems";
-import Masterjewelstock from "./Masterjewelstock";
-import Cashgold from "./Cashgold";
-import { FiLogOut } from "react-icons/fi";
+// import Masterjewelstock from "./Masterjewelstock";
+// import Cashgold from "./Cashgold";
+import { FiLogOut, FiArrowLeft } from "react-icons/fi";
 
 const Master = () => {
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
   const [showGoldsmithDetails, setShowGoldsmithDetails] = useState(false);
   const [showAddItemsDetails, setShowAddItemsDetails] = useState(false);
   const [showJewelStock, setShowJewelStock] = useState(false);
-  const [showCashGold, setShowCashGold] = useState(false)
+  const [showCashGold, setShowCashGold] = useState(false);
 
   const navigate = useNavigate();
 
@@ -22,7 +23,7 @@ const Master = () => {
     setShowGoldsmithDetails(false);
     setShowAddItemsDetails(false);
     setShowJewelStock(false);
-    setShowCashGold(false)
+    setShowCashGold(false);
   };
 
   const handleAddGoldsmithClick = () => {
@@ -30,7 +31,7 @@ const Master = () => {
     setShowCustomerDetails(false);
     setShowAddItemsDetails(false);
     setShowJewelStock(false);
-    setShowCashGold(false)
+    setShowCashGold(false);
   };
 
   const handleAddItemsClick = () => {
@@ -38,7 +39,7 @@ const Master = () => {
     setShowCustomerDetails(false);
     setShowGoldsmithDetails(false);
     setShowJewelStock(false);
-    setShowCashGold(false)
+    setShowCashGold(false);
   };
 
   const handleStockClick = () => {
@@ -46,15 +47,17 @@ const Master = () => {
     setShowCustomerDetails(false);
     setShowGoldsmithDetails(false);
     setShowAddItemsDetails(false);
-    setShowCashGold(false)
+    setShowCashGold(false);
   };
-const handleCashGold =()=>{
-  setShowCashGold(true);
-  setShowCustomerDetails(false);
-  setShowGoldsmithDetails(false);
-  setShowAddItemsDetails(false)
-  setShowJewelStock(false);
-}
+
+  const handleCashGold = () => {
+    setShowCashGold(true);
+    setShowCustomerDetails(false);
+    setShowGoldsmithDetails(false);
+    setShowAddItemsDetails(false);
+    setShowJewelStock(false);
+  };
+
   const handleLogout = () => {
     navigate("/");
   };
@@ -78,7 +81,27 @@ const handleCashGold =()=>{
             justifyContent: "center",
           }}
         >
-          <li style={{ marginRight: "20px" }}>
+          <li
+            style={{
+              marginRight: "20px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <button
+              onClick={() => navigate("/goldsmith")}
+              style={{
+                marginRight: "8px",
+                background: "transparent",
+                border: "none",
+                color: "white",
+                fontSize: "18px",
+                cursor: "pointer",
+              }}
+              title="Go to Goldsmith"
+            >
+              <FiArrowLeft />
+            </button>
             <button
               onClick={handleAddCustomerClick}
               className="nav-button"
@@ -114,14 +137,12 @@ const handleCashGold =()=>{
               Items
             </button>
           </li>
-          <li style={{ marginRight: "20px" }}>
+          {/* <li style={{ marginRight: "20px" }}>
             <button
               onClick={handleStockClick}
               className="nav-button"
               onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) =>
-                (e.target.style.backgroundColor = "transparent")
-              }
+              onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
             >
               Jewel Stock
             </button>
@@ -131,20 +152,18 @@ const handleCashGold =()=>{
               onClick={handleCashGold}
               className="nav-button"
               onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) =>
-                (e.target.style.backgroundColor = "transparent")
-              }
+              onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
             >
               Cash / Gold
             </button>
-          </li>
+          </li> */}
         </ul>
       </nav>
       {showCustomerDetails && <MasterCustomer />}
       {showGoldsmithDetails && <Mastergoldsmith />}
       {showAddItemsDetails && <Masteradditems />}
       {showJewelStock && <Masterjewelstock />}
-      {showCashGold && <Cashgold/>}
+      {showCashGold && <Cashgold />}
       <button onClick={handleLogout} style={logoutButtonStyle} title="Logout">
         <FiLogOut size={20} />
       </button>

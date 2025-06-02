@@ -141,7 +141,7 @@ const Jobcard = () => {
     ) {
       toast.error("Please fill all item fields before submitting.");
       return;
-    }
+    } 
 
     const selectedItemObj = itemsList.find(
       (item) => item.itemName === formData.selectedItem
@@ -406,7 +406,7 @@ const Jobcard = () => {
 
         <div className="job-card">
           <div className="job-card-header">
-            <div className="job-card-logo">JEEVA GOLD COINS</div>
+            <div className="job-card-logo">Premier Jewel</div>
             <div className="job-card-contact">
               <p>Town Hall 458 Road</p>
               <p>Coimbatore</p>
