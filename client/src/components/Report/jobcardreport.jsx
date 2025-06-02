@@ -4,12 +4,15 @@ import axios from "axios";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 import "./jobcardreport.css";
 
-
 const JobcardReport = () => {
   const [allJobCards, setAllJobCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedCards, setExpandedCards] = useState({});
+
+  const [searchGoldsmith, setSearchGoldsmith] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   useEffect(() => {
     const fetchAllJobCardsData = async () => {
@@ -84,18 +87,25 @@ const JobcardReport = () => {
     }));
   };
 
-
-  if (loading) {
+  if (loading)
     return <p className="loading-message">Loading all job card reports...</p>;
-  }
-
-  if (error) {
-    return <p className="error-message">Error: {error}</p>;
-  }
-
-  if (allJobCards.length === 0) {
+  if (error) return <p className="error-message">Error: {error}</p>;
+  if (allJobCards.length === 0)
     return <p className="no-data-message">No job cards found.</p>;
-  }
+
+  const filteredJobCards = allJobCards.filter((jobCard) => {
+    const nameMatch = jobCard.goldsmith?.name
+      ?.toLowerCase()
+      .includes(searchGoldsmith.toLowerCase());
+    const jobCardDate = new Date(jobCard.date);
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    const dateMatch =
+      (!from || jobCardDate >= from) && (!to || jobCardDate <= to);
+
+    return nameMatch && dateMatch;
+  });
 
   return (
     <div className="jobcard-report-container">
@@ -110,6 +120,28 @@ const JobcardReport = () => {
         <span style={{ color: "red" }}>
           Red = Owner should give balance to Goldsmith
         </span>
+      </div>
+
+      <div className="filters">
+        <input
+          type="text"
+          placeholder="Search by Goldsmith Name"
+          value={searchGoldsmith}
+          onChange={(e) => setSearchGoldsmith(e.target.value)}
+          className="filter-input"
+        />
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="filter-input"
+        />
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          className="filter-input"
+        />
       </div>
 
       <div className="table-responsive">
@@ -128,17 +160,15 @@ const JobcardReport = () => {
               <th>Total Beads</th>
               <th>Total Wastage</th>
               <th>Balance</th>
-            
             </tr>
           </thead>
           <tbody>
-            {allJobCards.map((jobCard, index) => {
+            {filteredJobCards.map((jobCard, index) => {
               const totals = calculateJobCardTotals(jobCard);
               const isExpanded = expandedCards[jobCard.id];
 
               return (
                 <React.Fragment key={jobCard.id}>
-             
                   <tr className="jobcard-main-row">
                     <td>
                       <button
@@ -161,14 +191,10 @@ const JobcardReport = () => {
                     <td>{totals.totalBeads} g</td>
                     <td>{totals.totalWastage} g</td>
                     <td
-                      style={{
-                        color: totals.balanceColor,
-                        fontWeight: "bold",
-                      }}
+                      style={{ color: totals.balanceColor, fontWeight: "bold" }}
                     >
                       {totals.balance} g
                     </td>
-                   
                   </tr>
 
                   {isExpanded &&
@@ -238,7 +264,6 @@ const JobcardReport = () => {
           </tbody>
         </table>
       </div>
-
     </div>
   );
 };
