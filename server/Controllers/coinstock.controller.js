@@ -110,17 +110,31 @@ const updateStock = async (req, res) => {
 
 const deleteStock = async (req, res) => {
   const { id } = req.params;
+  const parsedId = parseInt(id);
+
+  if (isNaN(parsedId)) {
+    return res.status(400).json({ message: "Invalid stock ID" });
+  }
 
   try {
-    const deletedStock = await prisma.coinStock.delete({
-      where: { id: parseInt(id) },
+    await prisma.stockLog.deleteMany({
+      where: { coinStockId: parsedId },
     });
 
-    res
-      .status(200)
-      .json({ message: "Stock item deleted successfully", data: deletedStock });
+    const deletedStock = await prisma.coinStock.delete({
+      where: { id: parsedId },
+    });
+
+    res.status(200).json({
+      message: "Stock item deleted successfully",
+      data: deletedStock,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting stock item", error });
+    console.error("Error deleting stock item:", error);
+    res.status(500).json({
+      message: "Error deleting stock item",
+      error: error.message,
+    });
   }
 };
 

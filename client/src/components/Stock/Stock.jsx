@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import "./Stock.css";
 import { toast, ToastContainer } from "react-toastify";
@@ -20,7 +19,6 @@ const Stock = () => {
   });
   const [editIndex, setEditIndex] = useState(null);
   const [editingId, setEditingId] = useState(null);
-
 
   useEffect(() => {
     fetchStockItems();
@@ -332,7 +330,6 @@ const Stock = () => {
               name="purity"
               placeholder="Purity"
               value={formData.purity}
-           
               readOnly
             />
 
@@ -370,7 +367,7 @@ const Stock = () => {
                 <td>{item.touch}</td>
                 <td>{parseFloat(item.totalWeight).toFixed(2)}</td>
                 <td>{parseFloat(item.purity).toFixed(3)}</td>
-              
+
                 <td>
                   <button
                     className="edit-btn"
@@ -409,5 +406,3 @@ const Stock = () => {
 };
 
 export default Stock;
-
-

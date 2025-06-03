@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   Autocomplete,
@@ -31,10 +30,11 @@ const Billing = () => {
   const [goldRate, setGoldRate] = useState("");
   const [hallmarkCharges, setHallmarkCharges] = useState(0);
   const [rows, setRows] = useState([]);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState(false);
   const [fetchedBills, setFetchedBills] = useState([]);
   const [selectedBill, setSelectedBill] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [openAddItem, setOpenAddItem] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -140,6 +140,43 @@ const Billing = () => {
     );
 
     setBillNo(`BILL-${bill.id}`);
+  };
+
+  const handleDeleteBill = async (billId) => {
+    console.log("Deleting bill with ID:", billId);
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this bill? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${BACKEND_SERVER_URL}/api/bills/${billId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete bill");
+      }
+
+      showSnackbar("Bill deleted successfully!", "success");
+
+      const updatedBills = fetchedBills.filter((bill) => bill.id !== billId);
+      setFetchedBills(updatedBills);
+
+      if (selectedBill && selectedBill.id === billId) {
+        resetForm();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      showSnackbar(error.message || "Failed to delete bill", "error");
+    }
   };
 
   const checkStockAvailability = () => {
@@ -281,12 +318,48 @@ const Billing = () => {
     setStockError(null);
   };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setNewItem((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewItem((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    setNewItem((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      if (["name", "no", "percentage"].includes(name)) {
+        const coin = parseFloat(updated.name) || 0;
+        const no = parseFloat(updated.no) || 0;
+        const percentage = parseFloat(updated.percentage) || 0;
+
+        const weight = coin * no;
+        const purityFactor = percentage / 1000;
+        const pure = weight * purityFactor;
+        const touch = percentage / 10;
+
+        updated.weight = weight.toString();
+        updated.pure = pure % 1 === 0 ? pure.toString() : pure.toFixed(3);
+        updated.touch = touch.toString();
+      }
+
+      if (["touch", "weight"].includes(name)) {
+        const weight =
+          parseFloat(name === "weight" ? value : updated.weight) || 0;
+        const touch = parseFloat(name === "touch" ? value : updated.touch) || 0;
+
+        const pure = (weight * touch) / 100;
+        updated.pure = pure % 1 === 0 ? pure.toString() : pure.toFixed(3);
+      }
+
+      return updated;
+    });
   };
 
   const calculateValues = () => {
@@ -393,7 +466,7 @@ const Billing = () => {
       showSnackbar("Invalid bill data", "error");
       return;
     }
-
+    setIsUpdating(true);
     try {
       const updatedBill = {
         ...selectedBill,
@@ -429,6 +502,8 @@ const Billing = () => {
     } catch (error) {
       console.error("Error:", error);
       showSnackbar(error.message || "Failed to update bill", "error");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -478,7 +553,7 @@ const Billing = () => {
       showSnackbar("Please fill all required fields", "error");
       return;
     }
-
+    setIsSubmitting(true);
     try {
       await reduceStockForBill(billItems);
       const totalWeight = billItems.reduce(
@@ -538,6 +613,8 @@ const Billing = () => {
     } catch (error) {
       console.error("Error:", error);
       showSnackbar(error.message || "Failed to create bill", "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -549,6 +626,8 @@ const Billing = () => {
     setHallmarkCharges(0);
     setSelectedBill(null);
     setViewMode(false);
+    setIsSubmitting(false);
+    setIsUpdating(false);
 
     const newBillNo = latestBill
       ? `BILL-${parseInt(latestBill.id) + 1}`
@@ -557,9 +636,10 @@ const Billing = () => {
   };
 
   const handlePrint = async () => {
-    const printButton = document.querySelector(".add-circle-icon"); 
+    const printButton = document.querySelector(".add-circle-icon");
     let printButtonParent = null;
     let printButtonClone = null;
+
     if (printButton) {
       printButtonParent = printButton.parentNode;
       printButtonClone = printButton.cloneNode(true);
@@ -568,23 +648,33 @@ const Billing = () => {
 
     const input = billRef.current;
     if (input) {
-      const canvas = await html2canvas(input, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a5");
+      const canvas = await html2canvas(input, {
+        scale: window.devicePixelRatio || 2,
+        useCORS: true,
+        scrollY: -window.scrollY,
+      });
 
-      const imgWidth = 150;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("l", "mm", "a5");
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidthInPx = canvas.width;
+      const imgHeightInPx = canvas.height;
+      const ratio = imgWidthInPx / imgHeightInPx;
+
+      let finalImgWidth = pageWidth;
+      let finalImgHeight = pageWidth / ratio;
+
+      if (finalImgHeight > pageHeight) {
+        finalImgHeight = pageHeight;
+        finalImgWidth = pageHeight * ratio;
       }
+
+      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pageHeight);
+
       pdf.save("bill.pdf");
     }
 
@@ -639,6 +729,7 @@ const Billing = () => {
                 setSelectedBill(null);
                 setViewMode(false);
                 resetForm();
+                setIsUpdating(false);
               }}
             >
               <span>Exit</span>
@@ -652,9 +743,14 @@ const Billing = () => {
               className="sidebar-button"
               onClick={handleSubmitBill}
               style={{
-                opacity: !selectedCustomer || billItems.length === 0 ? 0.5 : 1,
+                opacity:
+                  !selectedCustomer || billItems.length === 0 || isSubmitting
+                    ? 0.5
+                    : 1,
                 pointerEvents:
-                  !selectedCustomer || billItems.length === 0 ? "none" : "auto",
+                  !selectedCustomer || billItems.length === 0 || isSubmitting
+                    ? "none"
+                    : "auto",
               }}
             >
               <span>Save</span>
@@ -668,16 +764,25 @@ const Billing = () => {
               className="sidebar-button"
               onClick={handleUpdateBill}
               style={{
-                opacity: rows.length === 0 ? 0.5 : 1,
-                pointerEvents: rows.length === 0 ? "none" : "auto",
+                opacity: rows.length === 0 || isUpdating ? 0.5 : 1,
+                pointerEvents:
+                  rows.length === 0 || isUpdating ? "none" : "auto",
               }}
             >
               <span>Update</span>
             </div>
           </Tooltip>
         )}
+        <Tooltip title="Delete Bill" arrow placement="right">
+          <div
+            className="sidebar-button"
+            onClick={() => handleDeleteBill(selectedBill.id)}
+            style={{ backgroundColor: "#ffebee" }}
+          >
+            <span style={{ color: "#c62828" }}>Delete</span>
+          </div>
+        </Tooltip>
       </Box>
-
       <Modal
         open={viewMode && !selectedBill}
         onClose={() => setViewMode(false)}
@@ -787,7 +892,7 @@ const Billing = () => {
           <Box className="itemsSection">
             <div className="bill">
               <h3>Bill Details:</h3>
-              <b style={{ marginLeft: "41rem" }}>
+              <b style={{ marginLeft: "37rem" }}>
                 Gold Rate:
                 <TextField
                   size="small"
@@ -895,8 +1000,6 @@ const Billing = () => {
               </tbody>
             </table>
           </Box>
-
-          <br />
 
           <Box className="itemsSection">
             <div className="add">
@@ -1055,7 +1158,7 @@ const Billing = () => {
         onClose={handleCloseAddItem}
         aria-labelledby="add-item-modal"
       >
-        <Box className="modal-container">
+        {/* <Box className="modal-container">
           <Typography variant="h6" gutterBottom>
             Add Bill Details
           </Typography>
@@ -1071,8 +1174,8 @@ const Billing = () => {
               required
               disabled={viewMode && selectedBill}
             >
-              <MenuItem value="916">916 (22K)</MenuItem>
-              <MenuItem value="999">999 (24K)</MenuItem>
+              <MenuItem value="916">916</MenuItem>
+              <MenuItem value="999">999</MenuItem>
             </TextField>
 
             <TextField
@@ -1140,16 +1243,150 @@ const Billing = () => {
               label="Weight (Auto-calculated)"
               name="weight"
               value={newItem.weight}
+              onChange={handleInputChange}
               margin="normal"
-              InputProps={{ readOnly: true }}
+              InputProps
             />
             <TextField
               fullWidth
               label="Purity (Auto-calculated)"
               name="pure"
               value={newItem.pure}
+              onChange={handleInputChange}
               margin="normal"
-              InputProps={{ readOnly: true }}
+              InputProps
+            />
+            <Box className="modal-actions">
+              <Button onClick={handleCloseAddItem} className="cancel-button">
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSaveItem}
+                className="save-button"
+                disabled={!!stockError || (viewMode && selectedBill)}
+              >
+                Save
+              </Button>
+            </Box>
+          </Box>
+        </Box> */}
+
+        <Box className="modal-container">
+          <Typography variant="h6" gutterBottom>
+            Add Bill Details
+          </Typography>
+          <Box component="form" className="modal-form">
+            <TextField
+              fullWidth
+              label="Coin Info (e.g. 8g 916)"
+              name="coinInfo"
+              value={newItem.coinInfo || ""}
+              onChange={(e) => {
+                const input = e.target.value;
+                setNewItem((prev) => ({ ...prev, coinInfo: input }));
+
+                const match = input.match(/(\d+(?:\.\d+)?)g\s*(916|999)/);
+                if (match) {
+                  const gram = parseFloat(match[1]);
+                  const purity = match[2];
+
+                  setNewItem((prev) => ({
+                    ...prev,
+                    name: gram,
+                    percentage: purity,
+                  }));
+
+                  const matchingStock = stockData.find(
+                    (item) => item.coinType === purity && item.gram === gram
+                  );
+
+                  if (!matchingStock) {
+                    setStockError(`No available stock for ${gram}g ${purity}`);
+                    setAvailableStock(0);
+                  } else {
+                    setAvailableStock(matchingStock.available);
+                    setStockError("");
+                  }
+                } else {
+                  setStockError("Invalid format. Use like '8g 916'");
+                  setNewItem((prev) => ({
+                    ...prev,
+                    name: "",
+                    percentage: "",
+                  }));
+                  setAvailableStock(0);
+                }
+              }}
+              margin="normal"
+              required
+              disabled={viewMode && selectedBill}
+            />
+
+            {newItem.percentage && (
+              <Box>
+                {newItem.name ? (
+                  <>
+                    <Typography variant="body2">
+                      Available Stock: {availableStock}
+                    </Typography>
+                    {stockError && (
+                      <Alert severity="error" sx={{ mt: 1 }}>
+                        {stockError}
+                      </Alert>
+                    )}
+                  </>
+                ) : (
+                  <Typography variant="body2">
+                    Available coins for {newItem.percentage}:{" "}
+                    {stockData
+                      .filter((item) => item.coinType === newItem.percentage)
+                      .map((item) => item.gram)
+                      .join(", ")}
+                  </Typography>
+                )}
+              </Box>
+            )}
+
+            <TextField
+              fullWidth
+              label="No of Coins"
+              name="no"
+              value={newItem.no}
+              onChange={handleInputChange}
+              margin="normal"
+              type="number"
+              required
+              disabled={viewMode && selectedBill}
+            />
+            <TextField
+              fullWidth
+              label="Touch"
+              name="touch"
+              value={newItem.touch || ""}
+              onChange={handleInputChange}
+              margin="normal"
+              type="number"
+              required
+              disabled={viewMode && selectedBill}
+            />
+            <TextField
+              fullWidth
+              label="Weight (Auto-calculated)"
+              name="weight"
+              value={newItem.weight}
+              onChange={handleInputChange}
+              margin="normal"
+              InputProps
+            />
+            <TextField
+              fullWidth
+              label="Purity (Auto-calculated)"
+              name="pure"
+              value={newItem.pure}
+              onChange={handleInputChange}
+              margin="normal"
+              InputProps
             />
             <Box className="modal-actions">
               <Button onClick={handleCloseAddItem} className="cancel-button">

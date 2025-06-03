@@ -53,18 +53,16 @@ const DailySalesReport = () => {
     setPage(0);
   }, [date, bills]);
 
-
   const calculateMetrics = () => {
     return filteredBills.reduce(
       (acc, bill) => {
-       
-        const billTotal =
-          bill.items.reduce(
-            (sum, item) => sum + item.purity * bill.goldRate,
-            0
-          ) + (bill.hallmarkCharges || 0);
+        const itemsAmount = bill.items.reduce(
+          (sum, item) => sum + item.purity * bill.goldRate,
+          0
+        );
+        const hallmarkCharge = bill.hallmarkCharges || 0;
+        const billTotal = itemsAmount + hallmarkCharge;
 
-      
         const received = bill.receivedDetails?.reduce(
           (sum, detail) => ({
             pure: sum.pure + (detail.purityWeight || 0),
@@ -74,12 +72,13 @@ const DailySalesReport = () => {
           { pure: 0, cash: 0, hallmark: 0 }
         ) || { pure: 0, cash: 0, hallmark: 0 };
 
-       
-        const pureBalance =
+        const totalReceived = received.cash + received.hallmark;
+
+        const cashBalanceForMetric = itemsAmount - totalReceived;
+        const pureBalanceForMetric =
           bill.items.reduce((sum, item) => sum + item.purity, 0) -
           received.pure;
-        const cashBalance = billTotal - received.cash;
-        const hallmarkBalance = (bill.hallmarkCharges || 0) - received.hallmark;
+        const hallmarkBalanceForMetric = hallmarkCharge - received.hallmark;
 
         return {
           totalSales: acc.totalSales + billTotal,
@@ -91,14 +90,12 @@ const DailySalesReport = () => {
             bill.items.reduce((sum, item) => sum + item.purity, 0),
           pureReceived: acc.pureReceived + received.pure,
           cashReceived: acc.cashReceived + received.cash,
-          cashPaid: acc.cashPaid, 
-          outstandingPure:
-            acc.outstandingPure + (pureBalance > 0 ? pureBalance : 0),
-          outstandingCash:
-            acc.outstandingCash + (cashBalance > 0 ? cashBalance : 0),
+          hallmarkReceived: acc.hallmarkReceived + received.hallmark,
+          cashPaid: acc.cashPaid,
+          outstandingCash: acc.outstandingCash + cashBalanceForMetric,
           outstandingHallmark:
-            acc.outstandingHallmark +
-            (hallmarkBalance > 0 ? hallmarkBalance : 0),
+            acc.outstandingHallmark + hallmarkBalanceForMetric,
+          outstandingPure: acc.outstandingPure + pureBalanceForMetric,
         };
       },
       {
@@ -107,10 +104,11 @@ const DailySalesReport = () => {
         totalPurity: 0,
         pureReceived: 0,
         cashReceived: 0,
+        hallmarkReceived: 0,
         cashPaid: 0,
-        outstandingPure: 0,
         outstandingCash: 0,
         outstandingHallmark: 0,
+        outstandingPure: 0,
       }
     );
   };
@@ -146,13 +144,12 @@ const DailySalesReport = () => {
           InputLabelProps={{ shrink: true }}
           sx={{ minWidth: 200 }}
         />
-
         <Button variant="outlined" onClick={handleReset}>
           Show All
         </Button>
       </Box>
 
-      <Box
+      {/* <Box
         sx={{
           display: "flex",
           flexWrap: "wrap",
@@ -180,12 +177,18 @@ const DailySalesReport = () => {
           Cash Received: ₹{metrics.cashReceived.toFixed(2)}
         </Typography>
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          Hallmark Received: ₹{metrics.hallmarkReceived.toFixed(2)}
+        </Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Outstanding Cash: ₹{metrics.outstandingCash.toFixed(2)}
+        </Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          Outstanding Hallmark: ₹{metrics.outstandingHallmark.toFixed(2)}
         </Typography>
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Number of Bills: {filteredBills.length}
         </Typography>
-      </Box>
+      </Box> */}
 
       <TableContainer component={Paper}>
         <Table>
@@ -197,8 +200,10 @@ const DailySalesReport = () => {
               <TableCell>Total Purity</TableCell>
               <TableCell>Total Amount</TableCell>
               <TableCell>Cash Received</TableCell>
+              <TableCell>Hallmark Received</TableCell>
               <TableCell>Pure Received</TableCell>
               <TableCell>Cash Balance</TableCell>
+              <TableCell>Hallmark Balance</TableCell>
               <TableCell>Pure Balance</TableCell>
             </TableRow>
           </TableHead>
@@ -214,21 +219,25 @@ const DailySalesReport = () => {
                   (sum, item) => sum + item.purity,
                   0
                 );
-                const totalAmount =
-                  bill.items.reduce(
-                    (sum, item) => sum + item.purity * bill.goldRate,
-                    0
-                  ) + (bill.hallmarkCharges || 0);
+                const itemsAmount = bill.items.reduce(
+                  (sum, item) => sum + item.purity * bill.goldRate,
+                  0
+                );
+                const hallmarkCharge = bill.hallmarkCharges || 0;
+                const totalAmount = itemsAmount + hallmarkCharge;
 
                 const received = bill.receivedDetails?.reduce(
                   (sum, detail) => ({
                     cash: sum.cash + (detail.amount || 0),
                     pure: sum.pure + (detail.purityWeight || 0),
+                    hallmark: sum.hallmark + (detail.hallmark || 0),
                   }),
-                  { cash: 0, pure: 0 }
-                ) || { cash: 0, pure: 0 };
+                  { cash: 0, pure: 0, hallmark: 0 }
+                ) || { cash: 0, pure: 0, hallmark: 0 };
 
-                const cashBalance = totalAmount - received.cash;
+                const cashBalance = received.cash;
+
+                const hallmarkBalance = hallmarkCharge - received.hallmark;
                 const pureBalance = totalPurity - received.pure;
 
                 return (
@@ -239,13 +248,22 @@ const DailySalesReport = () => {
                     <TableCell>{totalPurity.toFixed(3)}</TableCell>
                     <TableCell>₹{totalAmount.toFixed(2)}</TableCell>
                     <TableCell>₹{received.cash.toFixed(2)}</TableCell>
+                    <TableCell>₹{received.hallmark.toFixed(2)}</TableCell>
                     <TableCell>{received.pure.toFixed(3)} g</TableCell>
                     <TableCell
                       sx={{
-                        color: cashBalance > 0 ? "error.main" : "success.main",
+                        color: "success.main",
                       }}
                     >
                       ₹{cashBalance.toFixed(2)}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        color:
+                          hallmarkBalance > 0 ? "error.main" : "success.main",
+                      }}
+                    >
+                      ₹{hallmarkBalance.toFixed(2)}
                     </TableCell>
                     <TableCell
                       sx={{
