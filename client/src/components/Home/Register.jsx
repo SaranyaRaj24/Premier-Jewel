@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "../../Assets/logo.png";
+// import logo from "../../Assets/logo.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
@@ -36,9 +36,9 @@ function Register() {
 
   return (
     <div className="home-container">
-      <div className="left-side">
+      {/* <div className="left-side">
         <img src={logo} alt="Logo" className="large-logo" />{" "}
-      </div>
+      </div> */}
       <div className="right-side">
         <div className="login-box">
           <div className="login-header">

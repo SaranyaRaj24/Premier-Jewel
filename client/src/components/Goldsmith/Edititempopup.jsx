@@ -533,7 +533,7 @@ const EditItemPopup = ({
             <select
               value={wastageOperation}
               onChange={(e) => setWastageOperation(e.target.value)}
-              style={{ marginLeft: "10px", marginRight: "5px" }}
+              style={{ marginLeft: "10px", marginRight: "5px",width:"10rem" }}
             >
               <option value="%">%</option>
               <option value="+">+</option>
