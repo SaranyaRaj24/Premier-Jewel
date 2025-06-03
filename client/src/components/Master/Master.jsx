@@ -5,8 +5,8 @@ import MasterCustomer from "./Mastercustomer";
 import "./Master.css";
 import Mastergoldsmith from "./Mastergoldsmith";
 import Masteradditems from "./Masteradditems";
-// import Masterjewelstock from "./Masterjewelstock";
-// import Cashgold from "./Cashgold";
+import Masterjewelstock from "./Masterjewelstock";
+import Cashgold from "./Cashgold";
 import { FiLogOut, FiArrowLeft } from "react-icons/fi";
 
 const Master = () => {
@@ -138,7 +138,7 @@ const Master = () => {
               Items
             </button>
           </li>
-          {/* <li style={{ marginRight: "20px" }}>
+          <li style={{ marginRight: "20px" }}>
             <button
               onClick={handleStockClick}
               className="nav-button"
@@ -157,7 +157,7 @@ const Master = () => {
             >
               Cash / Gold
             </button>
-          </li> */}
+          </li>
         </ul>
       </nav>
       {showCustomerDetails && <MasterCustomer />}

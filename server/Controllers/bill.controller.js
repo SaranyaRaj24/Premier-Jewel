@@ -1,4 +1,3 @@
-
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -121,7 +120,45 @@ const getBills = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch bills" });
   }
 };
+const deleteBill = async (req, res) => {
+  const { id } = req.params;
 
+  const parsedId = parseInt(id);
+  if (isNaN(parsedId)) {
+    return res.status(400).json({ message: "Invalid bill ID" });
+  }
+
+  try {
+    const existingBill = await prisma.bill.findUnique({
+      where: { id: parsedId },
+      include: {
+        items: true,
+        receivedDetails: true,
+      },
+    });
+
+    if (!existingBill) {
+      return res.status(404).json({ message: "Bill not found" });
+    }
+
+    await prisma.receivedDetail.deleteMany({
+      where: { billId: parsedId },
+    });
+
+    await prisma.billItem.deleteMany({
+      where: { billId: parsedId },
+    });
+
+    await prisma.bill.delete({
+      where: { id: parsedId },
+    });
+
+    return res.status(200).json({ message: "Bill deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting bill:", error);
+    return res.status(500).json({ message: "Failed to delete bill" });
+  }
+};
 const addReceiveEntry = async (req, res) => {
   try {
     const { id } = req.params;
@@ -167,7 +204,7 @@ const addReceiveEntry = async (req, res) => {
         };
       })
       .filter((detail) => !existingKeys.has(detail._key))
-      .map(({ _key, ...detail }) => detail); 
+      .map(({ _key, ...detail }) => detail);
 
     if (!sanitizedDetails.length) {
       return res.status(200).json({ message: "No new receive entries to add" });
@@ -207,4 +244,5 @@ module.exports = {
   getBills,
   getBillById,
   addReceiveEntry,
+  deleteBill,
 };

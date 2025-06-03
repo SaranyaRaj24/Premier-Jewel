@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -57,7 +56,7 @@ const CustomerReport = () => {
         const response = await fetch(`${BACKEND_SERVER_URL}/api/bills`);
         const data = await response.json();
         setBills(data);
-        setFilteredBills(data); 
+        setFilteredBills(data);
       } catch (error) {
         console.error("Error fetching bills:", error);
       }
@@ -65,7 +64,7 @@ const CustomerReport = () => {
 
     fetchCustomers();
     fetchBills();
-  }, []); 
+  }, []);
 
   useEffect(() => {
     let result = bills;
@@ -74,7 +73,6 @@ const CustomerReport = () => {
       result = result.filter((bill) => bill.customerId === selectedCustomer.id);
       calculateBalances(selectedCustomer.id);
     } else {
-    
       setOpeningBalance(0);
       setClosingBalance(0);
     }
@@ -93,7 +91,7 @@ const CustomerReport = () => {
 
     setFilteredBills(result);
     setPage(0);
-  }, [selectedCustomer, startDate, endDate, bills]); 
+  }, [selectedCustomer, startDate, endDate, bills]);
 
   const calculateBalances = (customerId) => {
     const openingBills = bills.filter(
@@ -172,7 +170,7 @@ const CustomerReport = () => {
     setSelectedCustomer(null);
     setStartDate(today);
     setEndDate(today);
-    setFilteredBills(bills); 
+    setFilteredBills(bills);
     setOpeningBalance(0);
     setClosingBalance(0);
   };
@@ -304,7 +302,6 @@ const CustomerReport = () => {
                   0
                 );
 
-             
                 const customer = customers.find(
                   (c) => c.id === bill.customerId
                 );

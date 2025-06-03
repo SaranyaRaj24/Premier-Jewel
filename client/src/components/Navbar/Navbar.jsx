@@ -56,7 +56,7 @@ function Navbar() {
             Gold Smith
           </a>
         </li>
-{/* 
+
         <li style={navItemStyle}>
           <div style={dropdownHeaderStyle} onClick={toggleBillsDropdown}>
             Bills {showBillsDropdown ? <FiChevronUp /> : <FiChevronDown />}
@@ -72,7 +72,7 @@ function Navbar() {
               </a>
             </div>
           )}
-        </li> */}
+        </li>
 
         <li style={navItemStyle}>
           <div style={dropdownHeaderStyle} onClick={toggleReportsDropdown}>
@@ -80,7 +80,7 @@ function Navbar() {
           </div>
           {showReportsDropdown && (
             <div style={dropdownMenuStyle}>
-              {/* <a
+               <a
                 href="/report"
                 style={dropdownItemStyle}
                 className="dropdown-item"
@@ -93,14 +93,14 @@ function Navbar() {
                 className="dropdown-item"
               >
                 Customer Report
-              </a> */}
-              {/* <a
+              </a> 
+               <a
                 href="/overallreport"
                 style={dropdownItemStyle}
                 className="dropdown-item"
               >
                 Overall Report
-              </a> */}
+              </a> 
               <a
                 href="/jobcardreport"
                 style={dropdownItemStyle}
@@ -112,11 +112,11 @@ function Navbar() {
           )}
         </li>
 
-        {/* <li style={navItemStyle}>
+        <li style={navItemStyle}>
           <a href="/stock" style={linkStyle}>
             Coin Stock
           </a>
-        </li> */}
+        </li>
       </ul>
 
       <button onClick={handleLogout} style={logoutButtonStyle} title="Logout">
