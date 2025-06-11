@@ -18,6 +18,9 @@ import CustomerReport from "./components/Report/customer.report";
 import Overallreport from "./components/Report/overallreport";
 import Jobcardreport from "./components/Report/jobcardreport";
 import ProtectedRoutes from "../src/ProtectedRoutes/protected.routes";
+import GoldsmithDetails from "./components/Goldsmith/GoldsmithDetails";
+import Jobcarddd from "./components/Goldsmith/Jobcarddd";
+import JobcardddReport from "./components/Report/jobcardddReport";
 
 
 function App() {
@@ -67,6 +70,7 @@ function App() {
             </ProtectedRoutes>
           }
         />
+
         <Route
           path="/customerreport"
           element={
@@ -127,6 +131,37 @@ function App() {
             </ProtectedRoutes>
           }
         />
+
+       <Route
+        path="/goldsmithdetails/:id/:name" 
+        element={
+          <ProtectedRoutes> 
+            <PageWithNavbar> 
+          <GoldsmithDetails/>
+          </PageWithNavbar>
+          </ProtectedRoutes>
+        }
+         />
+        <Route path="jobcarddd"
+           element={
+            <ProtectedRoutes>
+              <PageWithNavbar>
+               <Jobcarddd/>
+              </PageWithNavbar>
+            </ProtectedRoutes>
+          } />
+
+        <Route
+        path="/jobcardddReport"
+        element={
+          <ProtectedRoutes> 
+            <PageWithNavbar> 
+              <JobcardddReport/>
+            </PageWithNavbar>
+          </ProtectedRoutes>
+        }       
+        /> 
+   
 
         <Route path="/master" element={<Master />} />
         <Route path="/mastercustomer" element={<MasterCustomer />} />
