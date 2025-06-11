@@ -15,7 +15,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import "./Goldsmith.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Goldsmith = () => {
@@ -117,7 +117,19 @@ const Goldsmith = () => {
                           }
                         )
                       }
-                    />
+                    />  
+                     
+                      <Link
+  to={`/goldsmithdetails/${goldsmith.id}/${goldsmith.name}`}
+  state={{
+    phone: goldsmith.phone,
+    address: goldsmith.address,
+  }}
+>
+  newjobcard
+</Link>   <br/>
+
+
                   </TableCell>
                 </TableRow>
               ))

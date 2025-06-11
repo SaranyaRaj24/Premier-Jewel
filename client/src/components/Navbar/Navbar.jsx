@@ -108,6 +108,12 @@ function Navbar() {
               >
                 Jobcard Report
               </a>
+              <a href="/jobcardddReport"
+              style={dropdownItemStyle}
+              className="dropdown-item"
+              > 
+                Jobcarddd Report
+              </a>
             </div>
           )}
         </li>
