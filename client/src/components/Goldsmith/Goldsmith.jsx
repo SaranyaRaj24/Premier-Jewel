@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -11,9 +12,10 @@ import {
   TableCell,
   TextField,
   InputAdornment,
+  Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined"; 
 import "./Goldsmith.css";
 import { Link, useNavigate } from "react-router-dom";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
@@ -99,37 +101,24 @@ const Goldsmith = () => {
             {filteredGoldsmith.length > 0 ? (
               filteredGoldsmith.map((goldsmith, index) => (
                 <TableRow key={index}>
-                  <TableCell>{goldsmith.name}</TableCell>
-                  <TableCell>{goldsmith.phone}</TableCell>
-                  <TableCell>{goldsmith.address}</TableCell>
-                  <TableCell>
-                    <VisibilityIcon
-                      onClick={() =>
-                        navigate(
-                          `/jobcard/${goldsmith.id}/${goldsmith.name}`,
-                          {
-                            state: {
-                              goldsmithId:goldsmith.id,
-                              goldsmithName: goldsmith.name,
-                              goldsmithPhone: goldsmith.phone,
-                              goldsmithAddress: goldsmith.address,
-                            },
-                          }
-                        )
-                      }
-                    />  
-                     
+                  <TableCell align="center">{goldsmith.name}</TableCell>
+                  <TableCell align="center">{goldsmith.phone}</TableCell>
+                  <TableCell align="center">{goldsmith.address}</TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="View Jobcard">
                       <Link
-  to={`/goldsmithdetails/${goldsmith.id}/${goldsmith.name}`}
-  state={{
-    phone: goldsmith.phone,
-    address: goldsmith.address,
-  }}
->
-  newjobcard
-</Link>   <br/>
-
-
+                        to={`/goldsmithdetails/${goldsmith.id}/${goldsmith.name}`}
+                        state={{
+                          phone: goldsmith.phone,
+                          address: goldsmith.address,
+                        }}
+                        style={{ textDecoration: "none", color: "#1976d2" }}
+                      >
+                        <AssignmentIndOutlinedIcon
+                          style={{ cursor: "pointer" }}
+                        />
+                      </Link>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))

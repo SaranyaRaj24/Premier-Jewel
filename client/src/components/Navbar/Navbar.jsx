@@ -1,230 +1,273 @@
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiLogOut, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import NotificationBell from "../Notification/Notification";
 
-function Navbar() {
+const Navbar = () => {
   const navigate = useNavigate();
-  const [showReportsDropdown, setShowReportsDropdown] = useState(false);
-  const [showBillsDropdown, setShowBillsDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+  const [showReports, setShowReports] = useState(false);
+  const [activeLink, setActiveLink] = useState("");
+  const [activeReport, setActiveReport] = useState("");
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const reportsRef = useRef(null);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    
-    window.location.href = "/"; 
+    window.location.href = "/";
   };
 
-  const toggleReportsDropdown = () => {
-    setShowReportsDropdown(!showReportsDropdown);
-    setShowBillsDropdown(false);
+  const handleLinkClick = (path) => {
+    setActiveLink(path);
+    setShowReports(false);
   };
 
-  const toggleBillsDropdown = () => {
-    setShowBillsDropdown(!showBillsDropdown);
-    setShowReportsDropdown(false);
+  const handleReportClick = (path) => {
+    setActiveReport(path);
+    handleLinkClick(path);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowReportsDropdown(false);
-        setShowBillsDropdown(false);
-      }
-    };
+  const toggleReports = (e) => {
+    e.stopPropagation();
+    setShowReports(!showReports);
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  const getNavLinkStyle = (path) => ({
+    ...navLink,
+    color: activeLink === path ? "#fff" : "rgba(255, 255, 255, 0.8)",
+    backgroundColor:
+      activeLink === path
+        ? "rgba(255, 255, 255, 0.15)"
+        : hoveredItem === path
+        ? "rgba(255, 255, 255, 0.1)"
+        : "transparent",
+    fontWeight: activeLink === path ? 600 : 500,
+    transform: hoveredItem === path ? "translateY(-1px)" : "translateY(0)",
+    boxShadow: hoveredItem === path ? "0 2px 5px rgba(0,0,0,0.1)" : "none",
+  });
+
+  const getReportItemStyle = (path) => ({
+    ...dropdownItem,
+    backgroundColor:
+      activeReport === path
+        ? "#f1f3f5"
+        : hoveredItem === path
+        ? "#f8f9fa"
+        : "#fff",
+    fontWeight: activeReport === path ? 600 : 400,
+    transform: hoveredItem === path ? "translateX(2px)" : "translateX(0)",
+  });
 
   return (
-    <nav style={navbarStyle} ref={dropdownRef}>
-      <ul style={navListStyle}>
-        <li style={navItemStyle}>
-          <a href="/master" style={linkStyle}>
-            Master
-          </a>
-        </li>
-        <li style={navItemStyle}>
-          <a href="/customer" style={linkStyle}>
-            Customer
-          </a>
-        </li>
-        <li style={navItemStyle}>
-          <a href="/goldsmith" style={linkStyle}>
-            Gold Smith
-          </a>
-        </li>
+    <div style={navContainer}>
+      <div style={navLeft}>
+        <div style={logoContainer}>
+          <span style={logoText}>AGR</span>
+        </div>
 
-        <li style={navItemStyle}>
-          <div style={dropdownHeaderStyle} onClick={toggleBillsDropdown}>
-            Bills {showBillsDropdown ? <FiChevronUp /> : <FiChevronDown />}
-          </div>
-          {showBillsDropdown && (
-            <div style={dropdownMenuStyle}>
+        {["Master", "Customer", "Goldsmith", "Bill", "Receipt Voucher"].map(
+          (label) => {
+            const path = `/${label.replace(/\s+/g, "").toLowerCase()}`;
+            return (
               <a
-                href="/coinbill"
-                style={dropdownItemStyle}
-                className="dropdown-item"
+                key={label}
+                href={path}
+                style={getNavLinkStyle(path)}
+                onClick={() => handleLinkClick(path)}
+                onMouseEnter={() => setHoveredItem(path)}
+                onMouseLeave={() => setHoveredItem(null)}
               >
-                Coin Bill
+                {label}
               </a>
-            </div>
-          )}
-        </li>
-
-        <li style={navItemStyle}>
-          <div style={dropdownHeaderStyle} onClick={toggleReportsDropdown}>
-            Reports {showReportsDropdown ? <FiChevronUp /> : <FiChevronDown />}
-          </div>
-          {showReportsDropdown && (
-            <div style={dropdownMenuStyle}>
-               <a
-                href="/report"
-                style={dropdownItemStyle}
-                className="dropdown-item"
-              >
-                Daily Sales Report
-              </a>
-              <a
-                href="/customerreport"
-                style={dropdownItemStyle}
-                className="dropdown-item"
-              >
-                Customer Report
-              </a> 
-               <a
-                href="/overallreport"
-                style={dropdownItemStyle}
-                className="dropdown-item"
-              >
-                Overall Report
-              </a> 
-              <a
-                href="/jobcardreport"
-                style={dropdownItemStyle}
-                className="dropdown-item"
-              >
-                Jobcard Report
-              </a>
-              <a href="/jobcardddReport"
-              style={dropdownItemStyle}
-              className="dropdown-item"
-              > 
-                Jobcarddd Report
-              </a>
-            </div>
-          )}
-        </li>
-
-        <li style={navItemStyle}>
-          <a href="/stock" style={linkStyle}>
-            Coin Stock
-          </a>
-        </li>
-      </ul>
-
-      <button onClick={handleLogout} style={logoutButtonStyle} title="Logout">
-        <FiLogOut size={20} />
-      </button>
-
-      <style>
-        {`
-          .dropdown-item:hover {
-            background-color: black;
-            cursor: pointer;
+            );
           }
-        `}
-      </style>
-    </nav>
+        )}
+
+        <div
+          ref={reportsRef}
+          style={{
+            ...navLink,
+            backgroundColor:
+              hoveredItem === "reports"
+                ? "rgba(255, 255, 255, 0.1)"
+                : "transparent",
+            color: "rgba(255, 255, 255, 0.8)",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            position: "relative",
+            cursor: "pointer",
+          }}
+          onClick={toggleReports}
+          onMouseEnter={() => {
+            setHoveredItem("reports");
+            setShowReports(true);
+          }}
+          onMouseLeave={() => {
+            setHoveredItem(null);
+            setTimeout(() => setShowReports(false), 300);
+          }}
+        >
+          Reports{" "}
+          {showReports ? (
+            <FiChevronUp size={16} />
+          ) : (
+            <FiChevronDown size={16} />
+          )}
+          {showReports && (
+            <div
+              style={dropdownMenu}
+              onMouseEnter={() => setShowReports(true)}
+              onMouseLeave={() => setShowReports(false)}
+            >
+              {[
+                ["Daily Sales Report", "/report"],
+                ["Customer Report", "/customerreport"],
+                ["Overall Report", "/overallreport"],
+                ["Jobcard Report", "/jobcardddReport"],
+                ["Receipt Report", "/receiptreport"],
+              ].map(([name, path]) => (
+                <a
+                  key={path}
+                  href={path}
+                  style={getReportItemStyle(path)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleReportClick(path);
+                    navigate(path);
+                  }}
+                  onMouseEnter={() => setHoveredItem(path)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  {name}
+                  {activeReport === path && (
+                    <span style={selectedIndicator}>✓</span>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={navRight}>
+        <NotificationBell />
+        <button
+          onClick={handleLogout}
+          style={{
+            ...logoutButton,
+            transform:
+              hoveredItem === "logout" ? "translateY(-1px)" : "translateY(0)",
+            boxShadow:
+              hoveredItem === "logout" ? "0 2px 5px rgba(0,0,0,0.1)" : "none",
+          }}
+          onMouseEnter={() => setHoveredItem("logout")}
+          onMouseLeave={() => setHoveredItem(null)}
+        >
+          <FiLogOut size={18} />
+          <span style={{ marginLeft: "8px" }}>Logout</span>
+        </button>
+      </div>
+    </div>
   );
-}
-const navbarStyle = {
-  background: "#A31D1D",
-  padding: "10px 0",
-  width: "100%",
-  boxSizing: "border-box",
-  position: "relative",
 };
 
-const navListStyle = {
-  listStyle: "none",
+const navContainer = {
+  backgroundColor: "#2c3e50",
+  background: "linear-gradient(135deg, #2c3e50 0%, #1a2530 100%)",
   display: "flex",
-  justifyContent: "center",
-  margin: 0,
-  padding: 13,
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "0 24px",
+  color: "#fff",
+  position: "relative",
+  height: "64px",
+  boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
 };
 
-const navItemStyle = {
-  margin: "0 15px",
+const logoContainer = {
+  marginRight: "32px",
+  display: "flex",
+  alignItems: "center",
+};
+
+const logoText = {
+  fontSize: "1.25rem",
+  fontWeight: "600",
+  background: "linear-gradient(90deg, #fff, #a5d8ff)",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
+  color: "transparent",
+};
+
+const navLeft = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  height: "100%",
   position: "relative",
 };
 
-const linkStyle = {
-  color: "white",
+const navLink = {
+  cursor: "pointer",
+  fontSize: "0.95rem",
   textDecoration: "none",
-  padding: "8px 12px",
-  borderRadius: "4px",
-  transition: "background-color 0.3s ease",
-  display: "block",
+  padding: "8px 16px",
+  borderRadius: "6px",
+  transition: "all 0.2s ease",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
 };
 
-const dropdownHeaderStyle = {
-  ...linkStyle,
+const navRight = {
+  display: "flex",
+  alignItems: "center",
+  gap: "16px",
+};
+
+const logoutButton = {
+  backgroundColor: "transparent",
+  border: "1px solid rgba(255, 255, 255, 0.2)",
+  color: "white",
+  borderRadius: "6px",
+  padding: "8px 16px",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: "5px",
+  transition: "all 0.2s ease",
 };
 
-const dropdownMenuStyle = {
+const dropdownMenu = {
   position: "absolute",
   top: "100%",
-  left: 0,
-  backgroundColor: "#A31D1D",
-  minWidth: "200px",
-  borderRadius: "4px",
-  boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-  zIndex: 1000,
+  left: "0",
+  backgroundColor: "#fff",
+  color: "#333",
+  borderRadius: "8px",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+  overflow: "hidden",
+  zIndex: 999,
+  minWidth: "220px",
+  border: "1px solid rgba(0, 0, 0, 0.05)",
 };
 
-const dropdownItemStyle = {
-  color: "white",
-  textDecoration: "none",
-  padding: "10px 15px",
-  whiteSpace: "nowrap",
-  borderBottom: "1px solid rgba(255,255,255,0.1)",
-  display: "block",
-  transition: "background-color 0.3s ease",
-};
-
-
-const dropdownItemHoverStyle = `
-  .dropdown-item:hover {
-    background-color: black;
-    cursor: pointer;
-  }
-`;
-
-
-const styleElement = document.createElement("style");
-styleElement.innerHTML = dropdownItemHoverStyle;
-document.head.appendChild(styleElement);
-
-const logoutButtonStyle = {
-  backgroundColor: "#A31D1D",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "4px",
-  position: "absolute",
-  right: "10px",
-  top: "10px",
-  cursor: "pointer",
+const dropdownItem = {
+  padding: "12px 20px",
   display: "flex",
+  justifyContent: "space-between",
   alignItems: "center",
-  gap: "5px",
+  textDecoration: "none",
+  color: "#495057",
+  fontSize: "0.9rem",
+  transition: "all 0.2s ease",
+};
+
+const selectedIndicator = {
+  marginLeft: "8px",
+  color: "#4dabf7",
+  fontWeight: "bold",
 };
 
 export default Navbar;
