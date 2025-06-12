@@ -21,6 +21,9 @@ import ProtectedRoutes from "../src/ProtectedRoutes/protected.routes";
 import GoldsmithDetails from "./components/Goldsmith/GoldsmithDetails";
 import Jobcarddd from "./components/Goldsmith/Jobcarddd";
 import JobcardddReport from "./components/Report/jobcardddReport";
+import ReceiptReport from "./components/Report/receiptreport";
+import Receipt from "./components/ReceiptVoucher/receiptvoucher";
+import Customerorders from "./components/Customer/Customerorders";
 
 
 function App() {
@@ -51,7 +54,7 @@ function App() {
           }
         />
         <Route
-          path="/coinbill"
+          path="/bill"
           element={
             <ProtectedRoutes>
               <PageWithNavbar>
@@ -102,6 +105,26 @@ function App() {
           }
         />
         <Route
+          path="/receiptreport"
+          element={
+            <ProtectedRoutes>
+              <PageWithNavbar>
+                <ReceiptReport />
+              </PageWithNavbar>
+            </ProtectedRoutes>
+          }
+        />
+        <Route
+          path="/receiptvoucher"
+          element={
+            <ProtectedRoutes>
+              <PageWithNavbar>
+                <Receipt />
+              </PageWithNavbar>
+            </ProtectedRoutes>
+          }
+        />
+        <Route
           path="/stock"
           element={
             <ProtectedRoutes>
@@ -122,6 +145,16 @@ function App() {
           }
         />
         <Route
+          path="/customerorders"
+          element={
+            <ProtectedRoutes>
+              <PageWithNavbar>
+                <Customerorders/>
+              </PageWithNavbar>
+            </ProtectedRoutes>
+          }
+        />
+        <Route
           path="/jobcard/:id/:name"
           element={
             <ProtectedRoutes>
@@ -132,36 +165,37 @@ function App() {
           }
         />
 
-       <Route
-        path="/goldsmithdetails/:id/:name" 
-        element={
-          <ProtectedRoutes> 
-            <PageWithNavbar> 
-          <GoldsmithDetails/>
-          </PageWithNavbar>
-          </ProtectedRoutes>
-        }
-         />
-        <Route path="jobcarddd"
-           element={
+        <Route
+          path="/goldsmithdetails/:id/:name"
+          element={
             <ProtectedRoutes>
               <PageWithNavbar>
-               <Jobcarddd/>
+                <GoldsmithDetails />
               </PageWithNavbar>
             </ProtectedRoutes>
-          } />
+          }
+        />
+        <Route
+          path="jobcarddd"
+          element={
+            <ProtectedRoutes>
+              <PageWithNavbar>
+                <Jobcarddd />
+              </PageWithNavbar>
+            </ProtectedRoutes>
+          }
+        />
 
         <Route
-        path="/jobcardddReport"
-        element={
-          <ProtectedRoutes> 
-            <PageWithNavbar> 
-              <JobcardddReport/>
-            </PageWithNavbar>
-          </ProtectedRoutes>
-        }       
-        /> 
-   
+          path="/jobcardddReport"
+          element={
+            <ProtectedRoutes>
+              <PageWithNavbar>
+                <JobcardddReport />
+              </PageWithNavbar>
+            </ProtectedRoutes>
+          }
+        />
 
         <Route path="/master" element={<Master />} />
         <Route path="/mastercustomer" element={<MasterCustomer />} />

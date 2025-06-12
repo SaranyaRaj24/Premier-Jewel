@@ -1,8 +1,6 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MasterCustomer from "./Mastercustomer";
-import "./Master.css";
 import Mastergoldsmith from "./Mastergoldsmith";
 import Masteradditems from "./Masteradditems";
 import Masterjewelstock from "./Masterjewelstock";
@@ -10,176 +8,202 @@ import Cashgold from "./Cashgold";
 import { FiLogOut, FiArrowLeft } from "react-icons/fi";
 
 const Master = () => {
-  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
-  const [showGoldsmithDetails, setShowGoldsmithDetails] = useState(false);
-  const [showAddItemsDetails, setShowAddItemsDetails] = useState(false);
-  const [showJewelStock, setShowJewelStock] = useState(false);
-  const [showCashGold, setShowCashGold] = useState(false);
-
+  const [activeTab, setActiveTab] = useState("customer");
   const navigate = useNavigate();
 
-  const handleAddCustomerClick = () => {
-    setShowCustomerDetails(true);
-    setShowGoldsmithDetails(false);
-    setShowAddItemsDetails(false);
-    setShowJewelStock(false);
-    setShowCashGold(false)
-
-  };
-
-  const handleAddGoldsmithClick = () => {
-    setShowGoldsmithDetails(true);
-    setShowCustomerDetails(false);
-    setShowAddItemsDetails(false);
-    setShowJewelStock(false);
-    setShowCashGold(false);
-  };
-
-  const handleAddItemsClick = () => {
-    setShowAddItemsDetails(true);
-    setShowCustomerDetails(false);
-    setShowGoldsmithDetails(false);
-    setShowJewelStock(false);
-    setShowCashGold(false);
-  };
-
-  const handleStockClick = () => {
-    setShowJewelStock(true);
-    setShowCustomerDetails(false);
-    setShowGoldsmithDetails(false);
-    setShowAddItemsDetails(false);
-    setShowCashGold(false);
-  };
-
-  const handleCashGold = () => {
-    setShowCashGold(true);
-    setShowCustomerDetails(false);
-    setShowGoldsmithDetails(false);
-    setShowAddItemsDetails(false);
-    setShowJewelStock(false);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
   };
 
   const handleLogout = () => {
     navigate("/");
   };
 
+  const handleBack = () => {
+    navigate("/goldsmith");
+  };
+
+
+  const getNavButtonStyle = (tab) => ({
+    ...navButton,
+    color: activeTab === tab ? "#fff" : "rgba(255, 255, 255, 0.8)",
+    fontWeight: activeTab === tab ? 600 : 500,
+    "::after": {
+      ...(activeTab === tab
+        ? {
+            content: '""',
+            position: "absolute",
+            bottom: "0",
+            left: "16px",
+            right: "16px",
+            height: "3px",
+            backgroundColor: "#4dabf7",
+            borderRadius: "3px 3px 0 0",
+          }
+        : {}),
+    },
+    ":hover": {
+      color: "#fff",
+      "::after": {
+        ...(activeTab !== tab
+          ? {
+              content: '""',
+              position: "absolute",
+              bottom: "0",
+              left: "16px",
+              right: "16px",
+              height: "3px",
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "3px 3px 0 0",
+            }
+          : {}),
+      },
+    },
+  });
+
   return (
-    <div style={{ fontFamily: "Arial, sans-serif" }}>
-      <nav
-        style={{
-          backgroundColor: "#A31D1D",
-          padding: "15px",
-          color: "white",
-          boxShadow: "0 2px 4px rgba(255, 255, 255, 0.1)",
-        }}
-      >
-        <ul
-          style={{
-            listStyle: "none",
-            display: "flex",
-            margin: 0,
-            padding: 0,
-            justifyContent: "center",
-          }}
-        >
-          <li
-            style={{
-              marginRight: "20px",
-              display: "flex",
-              alignItems: "center",
-            }}
+    <div style={containerStyle}>
+      <div style={navContainer}>
+        <div style={navLeft}>
+          <button onClick={handleBack} style={backButton}>
+            <FiArrowLeft size={20} />
+          </button>
+
+          <button
+            onClick={() => handleTabChange("customer")}
+            style={getNavButtonStyle("customer")}
           >
-            <button
-              onClick={() => navigate("/goldsmith")}
-              style={{
-                marginRight: "8px",
-                background: "transparent",
-                border: "none",
-                color: "white",
-                fontSize: "18px",
-                cursor: "pointer",
-              }}
-              title="Go to Goldsmith"
-            >
-              <FiArrowLeft />
-            </button>
-            <button
-              onClick={handleAddCustomerClick}
-              className="nav-button"
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) =>
-                (e.target.style.backgroundColor = "transparent")
-              }
-            >
-              Customer
-            </button>
-          </li>
-          <li style={{ marginRight: "20px" }}>
-            <button
-              onClick={handleAddGoldsmithClick}
-              className="nav-button"
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) =>
-                (e.target.style.backgroundColor = "transparent")
-              }
-            >
-              Goldsmith
-            </button>
-          </li>
-          <li style={{ marginRight: "20px" }}>
-            <button
-              onClick={handleAddItemsClick}
-              className="nav-button"
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) =>
-                (e.target.style.backgroundColor = "transparent")
-              }
-            >
-              Items
-            </button>
-          </li>
-          <li style={{ marginRight: "20px" }}>
-            <button
-              onClick={handleStockClick}
-              className="nav-button"
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
-            >
-              Jewel Stock
-            </button>
-          </li>
-          <li style={{ marginRight: "20px" }}>
-            <button
-              onClick={handleCashGold}
-              className="nav-button"
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#333")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
-            >
-              Cash / Gold
-            </button>
-          </li>
-        </ul>
-      </nav>
-      {showCustomerDetails && <MasterCustomer />}
-      {showGoldsmithDetails && <Mastergoldsmith />}
-      {showAddItemsDetails && <Masteradditems />}
-      {showJewelStock && <Masterjewelstock />}
-      {showCashGold && <Cashgold />}
-      <button onClick={handleLogout} style={logoutButtonStyle} title="Logout">
-        <FiLogOut size={20} />
-      </button>
+            Customer
+          </button>
+
+          <button
+            onClick={() => handleTabChange("goldsmith")}
+            style={getNavButtonStyle("goldsmith")}
+          >
+            Goldsmith
+          </button>
+
+          <button
+            onClick={() => handleTabChange("items")}
+            style={getNavButtonStyle("items")}
+          >
+            Items
+          </button>
+
+          <button
+            onClick={() => handleTabChange("stock")}
+            style={getNavButtonStyle("stock")}
+          >
+            Jewel Stock
+          </button>
+
+          <button
+            onClick={() => handleTabChange("cashgold")}
+            style={getNavButtonStyle("cashgold")}
+          >
+            Cash / Gold
+          </button>
+        </div>
+
+        <button onClick={handleLogout} style={logoutButton}>
+          <FiLogOut size={18} />
+          <span style={{ marginLeft: "8px" }}>Logout</span>
+        </button>
+      </div>
+
+      <div style={contentContainer}>
+        {activeTab === "customer" && <MasterCustomer />}
+        {activeTab === "goldsmith" && <Mastergoldsmith />}
+        {activeTab === "items" && <Masteradditems />}
+        {activeTab === "stock" && <Masterjewelstock />}
+        {activeTab === "cashgold" && <Cashgold />}
+      </div>
     </div>
   );
 };
 
-const logoutButtonStyle = {
-  position: "absolute",
-  top: "15px",
-  right: "15px",
+// Styles
+const containerStyle = {
+  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const navContainer = {
+  backgroundColor: "#2c3e50",
+  background: "linear-gradient(135deg, #2c3e50 0%, #1a2530 100%)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "0 24px",
+  color: "#fff",
+  height: "64px",
+  boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+  position: "sticky",
+  top: 0,
+  zIndex: 1000,
+};
+
+const navLeft = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  height: "100%",
+};
+
+const backButton = {
   backgroundColor: "transparent",
   border: "none",
-  color: "#fff",
+  color: "white",
   cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "8px",
+  borderRadius: "6px",
+  marginRight: "12px",
+  transition: "all 0.3s ease",
+  ":hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    transform: "scale(1.1)",
+  },
+};
+
+const navButton = {
+  cursor: "pointer",
+  fontSize: "0.95rem",
+  padding: "8px 16px",
+  transition: "all 0.3s ease",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  backgroundColor: "transparent",
+  border: "none",
+  position: "relative",
+  margin: "0 4px",
+};
+
+const logoutButton = {
+  backgroundColor: "transparent",
+  border: "1px solid rgba(255, 255, 255, 0.2)",
+  color: "white",
+  borderRadius: "6px",
+  padding: "8px 16px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  transition: "all 0.3s ease",
+  ":hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+};
+
+const contentContainer = {
+  flex: 1,
+  padding: "24px",
+  backgroundColor: "#f8f9fa",
 };
 
 export default Master;

@@ -1,7 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-
 exports.createCustomer = async (req, res) => {
   const { name, phone, address } = req.body;
 
@@ -23,7 +22,6 @@ exports.createCustomer = async (req, res) => {
   }
 };
 
-
 exports.getAllCustomers = async (req, res) => {
   try {
     const customers = await prisma.customer.findMany();
@@ -32,7 +30,6 @@ exports.getAllCustomers = async (req, res) => {
     res.status(500).json({ message: "Error fetching customers", error });
   }
 };
-
 
 exports.getCustomerById = async (req, res) => {
   const { id } = req.params;
@@ -47,7 +44,6 @@ exports.getCustomerById = async (req, res) => {
     res.status(500).json({ message: "Error fetching customer", error });
   }
 };
-
 
 exports.updateCustomer = async (req, res) => {
   const { id } = req.params;
@@ -66,7 +62,6 @@ exports.updateCustomer = async (req, res) => {
     res.status(500).json({ message: "Error updating customer", error });
   }
 };
-
 
 exports.deleteCustomer = async (req, res) => {
   const { id } = req.params;
