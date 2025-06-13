@@ -149,50 +149,19 @@ const DailySalesReport = () => {
         </Button>
       </Box>
 
-      {/* <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 4,
-          mb: 3,
-          alignItems: "center",
-          bgcolor: "#f5f5f5",
-          p: 2,
-          borderRadius: 2,
-        }}
-      >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Total Sales: ₹{metrics.totalSales.toFixed(2)}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Total Weight: {metrics.totalWeight.toFixed(3)} g
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Total Purity: {metrics.totalPurity.toFixed(3)} g
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Pure Received: {metrics.pureReceived.toFixed(3)} g
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Cash Received: ₹{metrics.cashReceived.toFixed(2)}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Hallmark Received: ₹{metrics.hallmarkReceived.toFixed(2)}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Outstanding Cash: ₹{metrics.outstandingCash.toFixed(2)}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Outstanding Hallmark: ₹{metrics.outstandingHallmark.toFixed(2)}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Number of Bills: {filteredBills.length}
-        </Typography>
-      </Box> */}
-
+ 
       <TableContainer component={Paper}>
         <Table>
-          <TableHead>
+            <TableHead
+                          sx={{
+                            backgroundColor: "#e3f2fd",
+                            "& th": {
+                              backgroundColor: "#e3f2fd",
+                              color: "#0d47a1",
+                              fontWeight: "bold",
+                              fontSize: "1rem",
+                            },
+                          }}>
             <TableRow>
               <TableCell>Bill No</TableCell>
               <TableCell>Customer</TableCell>

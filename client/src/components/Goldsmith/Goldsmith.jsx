@@ -81,7 +81,16 @@ const Goldsmith = () => {
         />
 
         <Table>
-          <TableHead>
+          <TableHead
+                          sx={{
+                            backgroundColor: "#e3f2fd",
+                            "& th": {
+                              backgroundColor: "#e3f2fd",
+                              color: "#0d47a1",
+                              fontWeight: "bold",
+                              fontSize: "1rem",
+                            },
+                          }}>
             <TableRow>
               <TableCell align="center">
                 <strong>Goldsmith Name</strong>

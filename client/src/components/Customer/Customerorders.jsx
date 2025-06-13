@@ -194,9 +194,8 @@ const CustomerOrders = () => {
       >
         <Box>
           <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-            {customerName}'s Orders
+            Order History of {customerName}
           </Typography>
-         
         </Box>
         <Button
           variant="contained"
@@ -263,12 +262,15 @@ const CustomerOrders = () => {
               <Table>
                 <TableHead
                   sx={{
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    backgroundColor: "#f5f5f5 !important",
                     "& th": {
                       fontWeight: 700,
+                      color: "#000 !important", 
+                      backgroundColor: "#f5f5f5 !important", 
                     },
                   }}
                 >
+                  
                   <TableRow>
                     <TableCell>Item Name</TableCell>
                     <TableCell align="center">Quantity</TableCell>
@@ -397,7 +399,6 @@ const CustomerOrders = () => {
               >
                 <MenuItem value="Gold Ring">Gold Ring</MenuItem>
                 <MenuItem value="Silver Chain">Silver Chain</MenuItem>
-             
               </TextField>
               <TextField
                 label="Quantity"

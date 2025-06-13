@@ -13,7 +13,6 @@ import MasterCustomer from "./components/Master/Mastercustomer";
 import Customertrans from "./components/Customer/Customertrans";
 import Jobcard from "./components/Goldsmith/Jobcard";
 import AddCustomer from "./components/Billing/Addcustomer";
-import Register from "./components/Home/Register";
 import CustomerReport from "./components/Report/customer.report";
 import Overallreport from "./components/Report/overallreport";
 import Jobcardreport from "./components/Report/jobcardreport";
@@ -31,7 +30,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
+       
 
         <Route
           path="/customer"
@@ -208,7 +207,7 @@ function App() {
 function PageWithNavbar({ children }) {
   const location = useLocation();
 
-  const hideNavbarPaths = ["/", "/register"];
+  const hideNavbarPaths = ["/",];
 
   if (hideNavbarPaths.includes(location.pathname)) {
     return children;
