@@ -165,7 +165,17 @@ const Customer = () => {
         {filteredCustomers.length > 0 ? (
           <TableContainer>
             <Table>
-              <TableHead>
+              <TableHead
+                sx={{
+                  backgroundColor: "#e3f2fd",
+                  "& th": {
+                    backgroundColor: "#e3f2fd",
+                    color: "#0d47a1",
+                    fontWeight: "bold",
+                    fontSize: "1rem",
+                  },
+                }}
+              >
                 <TableRow>
                   <TableCell align="center">
                     <strong>Customer Name</strong>
@@ -181,6 +191,7 @@ const Customer = () => {
                   </TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {filteredCustomers.map((customer, index) => (
                   <TableRow key={index} hover>

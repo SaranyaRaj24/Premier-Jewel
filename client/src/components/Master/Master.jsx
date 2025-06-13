@@ -122,7 +122,7 @@ const Master = () => {
   );
 };
 
-// Styles
+
 const containerStyle = {
   fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   minHeight: "100vh",
@@ -172,8 +172,9 @@ const backButton = {
 
 const navButton = {
   cursor: "pointer",
-  fontSize: "0.95rem",
-  padding: "8px 16px",
+  fontSize: "1.05rem", 
+  fontWeight: 600, 
+  padding: "10px 18px",
   transition: "all 0.3s ease",
   height: "100%",
   display: "flex",
@@ -184,12 +185,15 @@ const navButton = {
   margin: "0 4px",
 };
 
+
 const logoutButton = {
   backgroundColor: "transparent",
   border: "1px solid rgba(255, 255, 255, 0.2)",
   color: "white",
   borderRadius: "6px",
-  padding: "8px 16px",
+  padding: "10px 18px", 
+  fontSize: "1rem", 
+  fontWeight: 600, 
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
@@ -199,6 +203,7 @@ const logoutButton = {
     borderColor: "rgba(255, 255, 255, 0.3)",
   },
 };
+
 
 const contentContainer = {
   flex: 1,

@@ -184,6 +184,7 @@ const navContainer = {
   position: "relative",
   height: "64px",
   boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+ 
 };
 
 const logoContainer = {
@@ -211,7 +212,8 @@ const navLeft = {
 
 const navLink = {
   cursor: "pointer",
-  fontSize: "0.95rem",
+  fontSize: "1.15rem",
+  fontWeight:"600",
   textDecoration: "none",
   padding: "8px 16px",
   borderRadius: "6px",
@@ -260,7 +262,8 @@ const dropdownItem = {
   alignItems: "center",
   textDecoration: "none",
   color: "#495057",
-  fontSize: "0.9rem",
+  fontSize: "1rem",
+  fontWeight:"500",
   transition: "all 0.2s ease",
 };
 

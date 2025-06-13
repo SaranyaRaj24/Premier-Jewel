@@ -313,74 +313,14 @@ const CustReport = () => {
     }
   };
 
-  // const location = useLocation();
-
-  // useEffect(() => {
-  //   // Get query params from URL when page loads or reloads
-  //   const params = new URLSearchParams(location.search);
-  //   const urlFromDate = params.get("fromDate");
-  //   const urlToDate = params.get("toDate");
-  //   const custId = params.get("custId");
-
-  //   const fetchFliterData=async()=>{
-  //     billInfo.splice(0,billInfo.length)
-  //     try{
-  //       const res= await getCustomerBillWithDate(urlFromDate,urlToDate,custId)
-  //       //  setBillInfo(res.data.data.billInfo)
-
-  //         const tempBill = [...billInfo]
-  //         res.data.data.billInfo.map((item, key) => {
-  //         const dateObj = new Date(item.created_at);
-  //         const year = dateObj.getFullYear();
-  //         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  //         const day = String(dateObj.getDate()).padStart(2, '0');
-
-  //         const formattedDate = `${year}-${month}-${day}`;
-  //         const billObj = {
-  //           'id': item.id,
-  //           'customer_id': item.customer_id,
-  //           'date': formattedDate,
-  //           'value': item.total_price,
-  //           'recivedAmount': item.Balance.length === 0 ? 0 : calculateRecivedAmount(item.Balance),
-  //           'Balance': item.Balance.length === 0 ? item.total_price : item.Balance[item.Balance.length - 1].remaining_gold_balance
-  //         }
-  //         tempBill.push(billObj)
-
-  //       })
-  //        console.log('closingAmount',res.data)
-  //        setBillInfo(tempBill)
-  //        setOpenBalance(res.data.data.openingBalance)
-  //        setClosingBalance(res.data.data.closingAmount)
-
-  //     }catch(err){
-  //       alert(err.message)
-  //     }
-  //   }
-  //   fetchFliterData()
-  //   // Fetch Bill and Customer data
-
-  // }, [location.search]); // Re-run on query change
-
-  // Fetch bill info when component mounts
-
   const handleViewBill = (billNo) => {
-    // Update URL with the specific billNo
+    
     navigate(`/billing/${billNo}`);
   };
 
   return (
     <>
-      {/* <Typography
-        variant="h5"
-        style={{
-          fontWeight: "bold",
-          color: "black",
-          marginBottom: 20,
-          textAlign: "center",
-        }}
-      >
-        Customer Report
-      </Typography> */}
+ 
       <div style={{ padding: "20px" }}>
         <Box
           sx={{
@@ -391,34 +331,7 @@ const CustReport = () => {
             marginBottom: 3,
           }}
         >
-          {/* <TextField
-            type="date"
-            label="From Date"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <TextField
-            type="date"
-            label="To Date"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <Autocomplete
-            value={selectedCustomer || null}
-            options={customers}
-            getOptionLabel={(option) => option.customer_name || ""}
-            onChange={(event, newValue) => setSelectedCustomer(newValue)}
-            renderInput={(params) => (
-              <TextField {...params} label="Select Customer" size="small" />
-            )}
-            sx={{ minWidth: 300 }}
-          /> */}
+         
 
           <Button
             variant="contained"
@@ -443,7 +356,7 @@ const CustReport = () => {
             Print
           </Button>
         </Box>
-        {/* Opening Balance at Top Right */}
+     
 
         <TableContainer
           component={Paper}
@@ -490,7 +403,16 @@ const CustReport = () => {
           </Box>
           <h3 style={{ textAlign: "center" }}>Customer Report</h3>
           <Table>
-            <TableHead style={{ backgroundColor: "aliceblue" }}>
+             <TableHead
+                            sx={{
+                              backgroundColor: "#e3f2fd",
+                              "& th": {
+                                backgroundColor: "#e3f2fd",
+                                color: "#0d47a1",
+                                fontWeight: "bold",
+                                fontSize: "1rem",
+                              },
+                            }}>
               <TableRow>
                 {[
                   "S.NO",
