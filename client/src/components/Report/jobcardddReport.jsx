@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { BACKEND_SERVER_URL } from "../../Config/Config";
+// import { BACKEND_SERVER_URL } from "../../Config/Config";
 import "./jobcardreport.css";
 
 const JobcardddReport = () => {
