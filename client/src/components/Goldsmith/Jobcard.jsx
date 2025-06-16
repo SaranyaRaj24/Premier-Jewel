@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { BACKEND_SERVER_URL } from "../../Config/Config";
+// import { BACKEND_SERVER_URL } from "../../Config/Config";
 import "./Jobcard.css";
 import EditItemPopup from "./Edititempopup";
 import { toast, ToastContainer } from "react-toastify";

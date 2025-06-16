@@ -16,7 +16,6 @@ import AddCustomer from "./components/Billing/Addcustomer";
 import CustomerReport from "./components/Report/customer.report";
 import Overallreport from "./components/Report/overallreport";
 import Jobcardreport from "./components/Report/jobcardreport";
-import ProtectedRoutes from "../src/ProtectedRoutes/protected.routes";
 import GoldsmithDetails from "./components/Goldsmith/GoldsmithDetails";
 import Jobcarddd from "./components/Goldsmith/Jobcarddd";
 import JobcardddReport from "./components/Report/jobcardddReport";
@@ -24,175 +23,138 @@ import ReceiptReport from "./components/Report/receiptreport";
 import Receipt from "./components/ReceiptVoucher/receiptvoucher";
 import Customerorders from "./components/Customer/Customerorders";
 
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-       
 
         <Route
           path="/customer"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Customer />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Customer />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/goldsmith"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Goldsmith />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Goldsmith />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/bill"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Billing />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Billing />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/report"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Report />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Report />
+            </PageWithNavbar>
           }
         />
-
         <Route
           path="/customerreport"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <CustomerReport />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <CustomerReport />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/overallreport"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Overallreport />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Overallreport />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/jobcardreport"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Jobcardreport />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Jobcardreport />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/receiptreport"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <ReceiptReport />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <ReceiptReport />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/receiptvoucher"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Receipt />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Receipt />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/stock"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Stock />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Stock />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/customertrans"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Customertrans />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Customertrans />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/customerorders"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Customerorders/>
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Customerorders />
+            </PageWithNavbar>
           }
         />
         <Route
           path="/jobcard/:id/:name"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Jobcard />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Jobcard />
+            </PageWithNavbar>
           }
         />
-
         <Route
           path="/goldsmithdetails/:id/:name"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <GoldsmithDetails />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <GoldsmithDetails />
+            </PageWithNavbar>
           }
         />
         <Route
-          path="jobcarddd"
+          path="/jobcarddd"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <Jobcarddd />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <Jobcarddd />
+            </PageWithNavbar>
           }
         />
-
         <Route
           path="/jobcardddReport"
           element={
-            <ProtectedRoutes>
-              <PageWithNavbar>
-                <JobcardddReport />
-              </PageWithNavbar>
-            </ProtectedRoutes>
+            <PageWithNavbar>
+              <JobcardddReport />
+            </PageWithNavbar>
           }
         />
 
@@ -206,9 +168,7 @@ function App() {
 
 function PageWithNavbar({ children }) {
   const location = useLocation();
-
-  const hideNavbarPaths = ["/",];
-
+  const hideNavbarPaths = ["/"];
   if (hideNavbarPaths.includes(location.pathname)) {
     return children;
   }
@@ -222,13 +182,5 @@ function PageWithNavbar({ children }) {
 }
 
 export default App;
-
-
-
-
-
-
-
-
 
 

@@ -19,7 +19,13 @@ function Home() {
         <p className="brand-tagline">
           Timeless elegance, crafted to perfection
         </p>
-        <button className="discover-btn" onClick={() => navigate("/customer")}>
+        <button
+          className="discover-btn"
+          onClick={() => {
+            console.log("Clicked Login");
+            navigate("/customer");
+          }}
+        >
           LOGIN
         </button>
       </div>
