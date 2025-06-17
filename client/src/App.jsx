@@ -22,6 +22,7 @@ import JobcardddReport from "./components/Report/jobcardddReport";
 import ReceiptReport from "./components/Report/receiptreport";
 import Receipt from "./components/ReceiptVoucher/receiptvoucher";
 import Customerorders from "./components/Customer/Customerorders";
+import Orderreport from "./components/Report/orderreport";
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
             </PageWithNavbar>
           }
         />
+        <Route path="/orderreport" element={<PageWithNavbar><Orderreport/></PageWithNavbar>}></Route>
         <Route
           path="/jobcardreport"
           element={
