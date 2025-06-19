@@ -71,6 +71,12 @@ exports.deleteGoldsmith = async (req, res) => {
     });
     res.status(200).json({ message: "Goldsmith deleted successfully" });
   } catch (error) {
+    if (error.code === "P2003") {
+      return res.status(400).json({
+        message:
+          "Cannot delete this goldsmith because it is linked to other records (e.g., jobcards).",
+      });
+    }
     res.status(500).json({ message: "Error deleting goldsmith", error });
   }
 };

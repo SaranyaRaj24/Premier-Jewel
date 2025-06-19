@@ -1,5 +1,4 @@
 
-
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -13,17 +12,33 @@ import {
   TextField,
   InputAdornment,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined"; 
+import AssignmentIndOutlinedIcon from "@mui/icons-material/AssignmentIndOutlined";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./Goldsmith.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Goldsmith = () => {
   const [goldsmith, setGoldsmith] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
+
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedGoldsmith, setSelectedGoldsmith] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
 
   useEffect(() => {
     const fetchGoldsmiths = async () => {
@@ -37,6 +52,67 @@ const Goldsmith = () => {
     };
     fetchGoldsmiths();
   }, []);
+
+  const handleEditClick = (goldsmith) => {
+    setSelectedGoldsmith(goldsmith);
+    setFormData({
+      name: goldsmith.name,
+      phone: goldsmith.phone,
+      address: goldsmith.address,
+    });
+    setOpenEditDialog(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      const response = await fetch(
+        `${BACKEND_SERVER_URL}/api/goldsmith/${selectedGoldsmith.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Goldsmith updated successfully");
+
+        setGoldsmith((prev) =>
+          prev.map((g) =>
+            g.id === selectedGoldsmith.id ? { ...g, ...formData } : g
+          )
+        );
+
+        setOpenEditDialog(false);
+      } else {
+        toast.error("Failed to update goldsmith");
+      }
+    } catch (error) {
+      toast.error("Error updating goldsmith");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this goldsmith?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`${BACKEND_SERVER_URL}/api/goldsmith/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setGoldsmith((prev) => prev.filter((g) => g.id !== id));
+        toast.success("Goldsmith deleted successfully");
+      } else {
+        toast.error("Failed to delete goldsmith");
+      }
+    } catch (error) {
+      toast.error(responseData.message);
+
+    }
+  };
 
   const filteredGoldsmith = goldsmith.filter((gs) => {
     const nameMatch =
@@ -82,15 +158,16 @@ const Goldsmith = () => {
 
         <Table>
           <TableHead
-                          sx={{
-                            backgroundColor: "#e3f2fd",
-                            "& th": {
-                              backgroundColor: "#e3f2fd",
-                              color: "#0d47a1",
-                              fontWeight: "bold",
-                              fontSize: "1rem",
-                            },
-                          }}>
+            sx={{
+              backgroundColor: "#e3f2fd",
+              "& th": {
+                backgroundColor: "#e3f2fd",
+                color: "#0d47a1",
+                fontWeight: "bold",
+                fontSize: "1rem",
+              },
+            }}
+          >
             <TableRow>
               <TableCell align="center">
                 <strong>Goldsmith Name</strong>
@@ -102,7 +179,7 @@ const Goldsmith = () => {
                 <strong>Address</strong>
               </TableCell>
               <TableCell align="center">
-                <strong>Status</strong>
+                <strong>Actions</strong>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -116,18 +193,36 @@ const Goldsmith = () => {
                   <TableCell align="center">
                     <Tooltip title="View Jobcard">
                       <Link
-                        to={`/goldsmithdetails/${goldsmith.id}/${goldsmith.name}`}
+                        to={`/newjobcard/${goldsmith.id}/${goldsmith.name}`}
                         state={{
                           phone: goldsmith.phone,
                           address: goldsmith.address,
                         }}
-                        style={{ textDecoration: "none", color: "#1976d2" }}
+                        style={{ marginRight: "10px", color: "#1976d2" }}
                       >
                         <AssignmentIndOutlinedIcon
                           style={{ cursor: "pointer" }}
                         />
                       </Link>
                     </Tooltip>
+
+                    <Tooltip title="Edit">
+                      <EditIcon
+                        style={{
+                          cursor: "pointer",
+                          marginRight: "10px",
+                          color: "#388e3c",
+                        }}
+                        onClick={() => handleEditClick(goldsmith)}
+                      />
+                    </Tooltip>
+
+                    {/* <Tooltip title="Delete">
+                      <DeleteIcon
+                        style={{ cursor: "pointer", color: "#d32f2f" }}
+                        onClick={() => handleDelete(goldsmith.id)}
+                      />
+                    </Tooltip> */}
                   </TableCell>
                 </TableRow>
               ))
@@ -141,6 +236,55 @@ const Goldsmith = () => {
           </TableBody>
         </Table>
       </Paper>
+
+
+      <Dialog
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Goldsmith</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Name"
+            value={formData.name}
+            fullWidth
+            margin="normal"
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+          <TextField
+            label="Phone"
+            value={formData.phone}
+            fullWidth
+            margin="normal"
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+          />
+          <TextField
+            label="Address"
+            value={formData.address}
+            fullWidth
+            margin="normal"
+            onChange={(e) =>
+              setFormData({ ...formData, address: e.target.value })
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleEditSubmit}
+            variant="contained"
+            color="primary"
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <ToastContainer position="top-right" autoClose={3000} />
     </Container>
   );
 };
