@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 
+
 const format = (val) =>
   isNaN(parseFloat(val)) ? "" : parseFloat(val).toFixed(3);
 
@@ -11,35 +12,58 @@ const NewJobCard = () => {
 
   const [description, setDescription] = useState("");
 
-  const [rows, setRows] = useState([{ weight: "", touch: "", purity: "" }]);
-
-  const [balance1, setBalance1] = useState("99.550");
-  const [balance2, setBalance2] = useState("96.000");
-  const openingBalance = 10.0;
-  const finalBalance = format(balance1 - balance2);
+  const [goldRows, setGoldRows] = useState([
+    { weight: "", touch: "", purity: "" },
+  ]);
+  const [itemRows, setItemRows] = useState([{ weight: "", name: "" }]);
 
 
-  const [items, setItems] = useState([{ weight: "", name: "" }]);
+  const fixedOpeningBalance = 10.0; 
+
+
+  const [balance1, setBalance1] = useState(""); 
+  const [balance2, setBalance2] = useState(""); 
+
+
+  const finalBalance = format(
+    parseFloat(balance1 || 0) - parseFloat(balance2 || 0)
+  );
+
   const [stoneWeight, setStoneWeight] = useState("");
-  const [netWeight, setNetWeight] = useState("0.000");
-  const [percentage, setPercentage] = useState("5");
+  const [netWeight, setNetWeight] = useState("0.000"); 
+  const [percentageSymbol, setPercentageSymbol] = useState("%"); 
   const [touch, setTouch] = useState("");
 
+
+  const symbolOptions = ["%", "+"];
+
+ 
+  const itemOptions = [
+    "Ring",
+    "Chain",
+    "Bangle",
+  ];
+
+ 
   const calculatePurity = (w, t) =>
     !isNaN(w) && !isNaN(t) ? ((w * t) / 100).toFixed(3) : "";
 
-  const handleRowChange = (i, field, val) => {
-    const copy = [...rows];
+  
+  const handleGoldRowChange = (i, field, val) => {
+    const copy = [...goldRows];
     copy[i][field] = val;
-    copy[i].purity = calculatePurity(copy[i].weight, copy[i].touch);
-    setRows(copy);
+    copy[i].purity = calculatePurity(
+      parseFloat(copy[i].weight),
+      parseFloat(copy[i].touch)
+    );
+    setGoldRows(copy);
   };
 
-  const handleItemChange = (i, field, val) => {
-    const updated = [...items];
+  const handleItemRowChange = (i, field, val) => {
+    const updated = [...itemRows];
     updated[i][field] = val;
-    setItems(updated);
-
+    setItemRows(updated);
+   
     const totalWeight = updated.reduce(
       (acc, cur) => acc + parseFloat(cur.weight || 0),
       0
@@ -50,50 +74,61 @@ const NewJobCard = () => {
 
   const handleStoneChange = (val) => {
     setStoneWeight(val);
-    const total = items.reduce((sum, i) => sum + parseFloat(i.weight || 0), 0);
+    const total = itemRows.reduce(
+      (sum, i) => sum + parseFloat(i.weight || 0),
+      0
+    );
     setNetWeight(format(total - parseFloat(val || 0)));
   };
 
   return (
     <div style={styles.container}>
-
+    
       <div style={styles.header}>
-        <div>Name: {name}</div>
-        <div>Date: {today}</div>
+        <div style={styles.headerItem}>
+          <span style={styles.headerLabel}>Name:</span> {name}
+        </div>
+        <div style={styles.headerItem}>
+          <span style={styles.headerLabel}>Date:</span> {today}
+        </div>
       </div>
 
-    
+     
       <div style={styles.section}>
-        <label>Description</label>
+        <label htmlFor="description" style={styles.label}>
+          Description
+        </label>
         <textarea
+          id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows="3"
           style={styles.textarea}
+          placeholder="Enter job description..."
         />
       </div>
 
- 
+     
       <div style={styles.section}>
-        <h4>Gold Calculation</h4>
-        {rows.map((row, i) => (
+        <h3 style={styles.sectionTitle}>Gold Calculation</h3>
+        {goldRows.map((row, i) => (
           <div key={i} style={styles.row}>
             <input
               type="number"
               placeholder="Weight"
               value={row.weight}
-              onChange={(e) => handleRowChange(i, "weight", e.target.value)}
+              onChange={(e) => handleGoldRowChange(i, "weight", e.target.value)}
               style={styles.input}
             />
-            <span>x</span>
+            <span style={styles.operator}>x</span>
             <input
               type="number"
               placeholder="Touch"
               value={row.touch}
-              onChange={(e) => handleRowChange(i, "touch", e.target.value)}
+              onChange={(e) => handleGoldRowChange(i, "touch", e.target.value)}
               style={styles.input}
             />
-            <span>=</span>
+            <span style={styles.operator}>=</span>
             <input
               type="text"
               readOnly
@@ -105,78 +140,113 @@ const NewJobCard = () => {
         ))}
         <button
           onClick={() =>
-            setRows([...rows, { weight: "", touch: "", purity: "" }])
+            setGoldRows([...goldRows, { weight: "", touch: "", purity: "" }])
           }
-          style={styles.plusBtn}
+          style={styles.circleButton}
         >
           +
         </button>
       </div>
 
-      {/* Balance */}
       <div style={styles.section}>
-        <h4>Balance</h4>
-        <div>Opening Balance = {format(openingBalance)}</div>
+        <h3 style={styles.sectionTitle}>Balance</h3>
         <div style={styles.balanceBlock}>
-          <div>Balance = {format(balance1)}</div>
-          <div style={{ paddingLeft: "80px" }}>{format(balance2)}</div>
-          <div style={styles.line}></div>
-          <div style={{ fontWeight: "bold" }}>Balance = {finalBalance}</div>
+          <div style={styles.balanceDisplayRow}>
+            <span style={styles.balanceLabel}>Opening Balance:</span>
+            <span style={styles.balanceValue}>
+              {format(fixedOpeningBalance)}
+            </span>
+          </div>
+
+          <div style={styles.balanceCalculationGroup}>
+            <div style={styles.balanceInputRow}>
+              <span style={styles.balanceLabel}>Balance:</span>
+              <input
+                type="number"
+                value={balance1}
+                onChange={(e) => setBalance1(e.target.value)}
+                style={styles.balanceInput}
+                placeholder="0.000"
+              />
+            </div>
+            <div style={styles.balanceInputRow}>
+              <span style={styles.balanceLabel}></span>{" "}
+           
+              <input
+                type="number"
+                value={balance2}
+                onChange={(e) => setBalance2(e.target.value)}
+                style={styles.balanceInput}
+                placeholder="0.000"
+              />
+            </div>
+            <div style={styles.balanceLine}></div>{" "}
+       
+            <div style={styles.finalBalance}>Balance: {finalBalance}</div>
+          </div>
         </div>
       </div>
 
       <div style={styles.section}>
-        <h4>Item Delivery</h4>
-        {items.map((item, i) => (
+        <h3 style={styles.sectionTitle}>Item Delivery</h3>
+        {itemRows.map((item, i) => (
           <div key={i} style={styles.row}>
             <input
               type="number"
               placeholder="Item Weight"
               value={item.weight}
-              onChange={(e) => handleItemChange(i, "weight", e.target.value)}
+              onChange={(e) => handleItemRowChange(i, "weight", e.target.value)}
               style={styles.input}
             />
             <select
               value={item.name}
-              onChange={(e) => handleItemChange(i, "name", e.target.value)}
-              style={styles.input}
+              onChange={(e) => handleItemRowChange(i, "name", e.target.value)}
+              style={styles.select}
             >
-              <option value="">Item Name</option>
-              <option value="Ring">Ring</option>
-              <option value="Chain">Chain</option>
-              <option value="Bangle">Bangle</option>
+              <option value="">Select Item</option>
+              {itemOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
           </div>
         ))}
         <button
-          onClick={() => setItems([...items, { weight: "", name: "" }])}
-          style={styles.plusBtn}
+          onClick={() => setItemRows([...itemRows, { weight: "", name: "" }])}
+          style={styles.circleButton}
         >
           +
         </button>
 
-     
-        <div style={{ marginTop: "10px" }}>
-          <label>Stone (less): </label>
+        <div style={styles.inputGroup}>
+          <label htmlFor="stoneWeight" style={styles.label}>
+            Stone (less):
+          </label>
           <input
+            id="stoneWeight"
             type="number"
             value={stoneWeight}
             onChange={(e) => handleStoneChange(e.target.value)}
             style={styles.input}
+            placeholder="0.000"
           />
-          <div>Net Weight = {netWeight}</div>
+        </div>
+        <div style={styles.netWeightDisplay}>
+          Net Weight = <span style={styles.netWeightValue}>{netWeight}</span>
         </div>
 
-
-        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+        <div style={styles.inputGroupFluid}>
           <select
-            value={percentage}
-            onChange={(e) => setPercentage(e.target.value)}
-            style={styles.input}
+            value={percentageSymbol}
+            onChange={(e) => setPercentageSymbol(e.target.value)}
+            style={styles.selectSmall}
           >
-            <option value="5">5%</option>
-            <option value="6">6%</option>
-            <option value="7">7%</option>
+            {symbolOptions.map((symbol) => (
+              <option key={symbol} value={symbol}>
+                {symbol}
+              </option>
+            ))}
           </select>
           <input
             type="number"
@@ -191,69 +261,250 @@ const NewJobCard = () => {
   );
 };
 
-
 const styles = {
   container: {
-    maxWidth: "700px",
-    margin: "0 auto",
-    padding: "20px",
-    fontFamily: "monospace",
-    backgroundColor: "#f9f9f9",
-    borderRadius: "8px",
-    boxShadow: "0 0 6px rgba(0,0,0,0.1)",
+    maxWidth: "800px",
+    margin: "30px auto",
+    padding: "30px",
+    fontFamily: "'Roboto', sans-serif",
+    backgroundColor: "#ffffff",
+    borderRadius: "12px",
+    boxShadow: "0 6px 12px rgba(0,0,0,0.1)",
+    border: "1px solid #e0e0e0",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "30px",
+    paddingBottom: "15px",
+    borderBottom: "1px solid #f0f0f0",
+  },
+  headerItem: {
+    fontSize: "1.1rem",
+    color: "#333",
+  },
+  headerLabel: {
     fontWeight: "bold",
-    fontSize: "18px",
-    marginBottom: "20px",
+    marginRight: "5px",
+    color: "#555",
   },
   section: {
-    marginBottom: "25px",
+    marginBottom: "30px",
+    padding: "20px",
+    backgroundColor: "#fefefe",
+    borderRadius: "8px",
+    border: "1px solid #f5f5f5",
+  },
+  sectionTitle: {
+    fontSize: "1.4rem",
+    color: "#2c3e50",
+    marginBottom: "20px",
+    borderBottom: "2px solid #3498db",
+    paddingBottom: "10px",
+  },
+  label: {
+    display: "block",
+    marginBottom: "8px",
+    fontWeight: "bold",
+    color: "#555",
   },
   textarea: {
     width: "100%",
-    padding: "8px",
-    fontSize: "14px",
+    padding: "12px",
+    fontSize: "1rem",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    resize: "vertical",
+    boxSizing: "border-box",
+    transition: "border-color 0.3s ease",
+    "&:focus": {
+      borderColor: "#3498db",
+      outline: "none",
+    },
   },
   row: {
     display: "flex",
-    gap: "10px",
     alignItems: "center",
-    marginBottom: "10px",
+    gap: "15px",
+    marginBottom: "15px",
   },
   input: {
-    padding: "6px 8px",
-    width: "120px",
-    fontSize: "14px",
+    flex: "1",
+    padding: "10px 12px",
+    fontSize: "1rem",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    boxSizing: "border-box",
+    minWidth: "100px",
+    transition: "border-color 0.3s ease",
+    "&:focus": {
+      borderColor: "#3498db",
+      outline: "none",
+    },
+  },
+  operator: {
+    fontSize: "1.2rem",
+    fontWeight: "bold",
+    color: "#777",
   },
   inputReadOnly: {
-    padding: "6px 8px",
-    width: "120px",
-    fontSize: "14px",
-    backgroundColor: "#e9ecef",
-    border: "1px solid #ccc",
+    flex: "1",
+    padding: "10px 12px",
+    fontSize: "1rem",
+    borderRadius: "6px",
+    border: "1px solid #e0e0e0",
+    backgroundColor: "#f5f5f5",
+    color: "#666",
+    cursor: "not-allowed",
+    boxSizing: "border-box",
+    minWidth: "100px",
   },
-  plusBtn: {
-    fontSize: "20px",
+  circleButton: {
+    fontSize: "1.5rem",
     borderRadius: "50%",
-    width: "32px",
-    height: "32px",
+    width: "40px",
+    height: "40px",
     border: "none",
-    backgroundColor: "#28a745",
+    backgroundColor: "#3498db", 
     color: "#fff",
     cursor: "pointer",
+    transition: "background-color 0.3s ease, transform 0.2s ease",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: "10px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    "&:hover": {
+      backgroundColor: "#2980b9",
+      transform: "scale(1.05)",
+    },
+    "&:active": {
+      backgroundColor: "#2471a3",
+      transform: "scale(1.0)",
+    },
   },
   balanceBlock: {
-    marginTop: "10px",
-    lineHeight: "1.6",
+    padding: "15px",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    border: "1px dashed #e0e0e0",
   },
-  line: {
-    borderTop: "1px solid #000",
-    width: "160px",
-    marginLeft: "80px",
-    margin: "4px 0",
+  balanceDisplayRow: {
+    
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "10px",
+    paddingBottom: "5px",
+    borderBottom: "1px solid #eee", 
+  },
+  balanceCalculationGroup: {
+ 
+    marginTop: "15px",
+  },
+  balanceInputRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between", 
+    marginBottom: "8px",
+  },
+  balanceLabel: {
+    flexShrink: 0,
+    width: "150px", 
+    fontWeight: "normal",
+    color: "#555",
+  },
+  balanceValue: {
+   
+    fontWeight: "bold",
+    color: "#333",
+    fontSize: "1.1rem",
+  },
+  balanceInput: {
+    padding: "8px 10px",
+    fontSize: "1rem",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    boxSizing: "border-box",
+    width: "150px",
+    transition: "border-color 0.3s ease",
+    "&:focus": {
+      borderColor: "#3498db",
+      outline: "none",
+    },
+  },
+  balanceLine: {
+  
+    borderTop: "1px solid #bbb",
+    width: "150px", 
+    marginLeft: "auto", 
+    marginRight: "0",
+    marginTop: "10px",
+    marginBottom: "10px",
+  },
+  finalBalance: {
+    fontWeight: "bold",
+    fontSize: "1.2rem",
+    color: "#34495e",
+    textAlign: "right",
+    paddingRight: "5px",
+  },
+  select: {
+    flex: "1",
+    padding: "10px 12px",
+    fontSize: "1rem",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    backgroundColor: "#fff",
+    cursor: "pointer",
+    boxSizing: "border-box",
+    minWidth: "150px",
+    transition: "border-color 0.3s ease",
+    "&:focus": {
+      borderColor: "#3498db",
+      outline: "none",
+    },
+  },
+  selectSmall: {
+    width: "60px", 
+    padding: "10px 8px",
+    fontSize: "1rem",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    backgroundColor: "#fff",
+    cursor: "pointer",
+    boxSizing: "border-box",
+    textAlignLast: "center", 
+    transition: "border-color 0.3s ease",
+    "&:focus": {
+      borderColor: "#3498db",
+      outline: "none",
+    },
+  },
+  inputGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginTop: "20px",
+    marginBottom: "10px",
+  },
+  inputGroupFluid: {
+    display: "flex",
+    gap: "15px",
+    marginTop: "20px",
+    alignItems: "center",
+  },
+  netWeightDisplay: {
+    fontSize: "1.1rem",
+    fontWeight: "bold",
+    color: "#2c3e50",
+    marginTop: "15px",
+    textAlign: "right",
+    paddingRight: "5px", // Small padding for alignment
+  },
+  netWeightValue: {
+    color: "#e74c3c", // Highlight net weight
   },
 };
 
