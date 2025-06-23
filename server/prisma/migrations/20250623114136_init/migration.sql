@@ -202,6 +202,31 @@ CREATE TABLE `Entry` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `customer_order` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `customer_id` INTEGER NOT NULL,
+    `item_name` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
+    `weight` DOUBLE NOT NULL,
+    `image` VARCHAR(191) NULL,
+    `due_date` DATETIME(3) NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `product_multiple_images` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `customer_order_id` INTEGER NOT NULL,
+    `filename` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `StockLog` ADD CONSTRAINT `StockLog_coinStockId_fkey` FOREIGN KEY (`coinStockId`) REFERENCES `CoinStock`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -228,3 +253,9 @@ ALTER TABLE `ReceivedDetail` ADD CONSTRAINT `ReceivedDetail_billId_fkey` FOREIGN
 
 -- AddForeignKey
 ALTER TABLE `Transaction` ADD CONSTRAINT `Transaction_customerId_fkey` FOREIGN KEY (`customerId`) REFERENCES `Customer`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `customer_order` ADD CONSTRAINT `customer_order_customer_id_fkey` FOREIGN KEY (`customer_id`) REFERENCES `Customer`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `product_multiple_images` ADD CONSTRAINT `product_multiple_images_customer_order_id_fkey` FOREIGN KEY (`customer_order_id`) REFERENCES `customer_order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
