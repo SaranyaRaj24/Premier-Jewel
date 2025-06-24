@@ -44,7 +44,7 @@ function MasterCustomer() {
     };
 
     try {
-     const response = await fetch(`${BACKEND_SERVER_URL}/api/customers`, {
+     const response = await fetch(`${BACKEND_SERVER_URL}/api/customers/create`, {
        method: "POST",
        headers: {
          "Content-Type": "application/json",
