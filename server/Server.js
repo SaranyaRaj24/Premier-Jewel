@@ -21,8 +21,9 @@ const path = require('path');
 require("dotenv").config();
 
 const app = express();
+var morgan = require('morgan')
 const PORT = process.env.PORT || 5002;
-
+app.use(morgan('dev'))
 app.use(cors());
 app.use(bodyParser.json());
 app.get("/", (req, res) => {
