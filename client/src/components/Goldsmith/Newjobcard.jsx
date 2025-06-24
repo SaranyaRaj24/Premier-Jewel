@@ -90,7 +90,7 @@ const NewJobCard = () => {
     let finalValue = base;
 
     if (percentageSymbol === "%") {
-      finalValue += (base * adjustment) / 100;
+      finalValue = (base * adjustment) / 100;
     } else if (percentageSymbol === "+") {
       finalValue += adjustment;
     }
