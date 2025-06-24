@@ -324,5 +324,58 @@
     margin-left: 10px;
   } 
 
-  
- 
+  /* New styles for the updated layout */
+
+.total-purity-container {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Adjust spacing as needed */
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.input-small {
+  width: 80px; /* Adjust width as needed */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.net-weight-display .net-weight-value {
+  font-weight: bold;
+  color: #007bff; /* Example color */
+}
+
+.input-group-fluid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.select-small {
+  width: 60px; /* Adjust width for the %/+ selector */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.balance-text-owner {
+  color: #dc3545; /* Red for owner gives balance */
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.balance-text-goldsmith {
+  color: #28a745; /* Green for goldsmith gives balance */
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.balance-amount {
+  font-size: 1.2rem;
+}

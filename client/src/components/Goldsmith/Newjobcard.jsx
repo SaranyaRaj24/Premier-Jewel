@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import "./NewJobCard.css"; 
+import Button from "@mui/material/Button";
+import "./NewJobCard.css";
 
 const format = (val) =>
   isNaN(parseFloat(val)) ? "" : parseFloat(val).toFixed(3);
 
 const NewJobCard = () => {
   const { name } = useParams();
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-IN");
+
   const [description, setDescription] = useState("");
   const [goldRows, setGoldRows] = useState([
     { weight: "", touch: "", purity: "" },
   ]);
   const [itemRows, setItemRows] = useState([{ weight: "", name: "" }]);
-  const fixedOpeningBalance = 10.0;
   const [deductionRows, setDeductionRows] = useState([
     { type: "Stone", customType: "", weight: "" },
   ]);
-  const [netWeight, setNetWeight] = useState("0.000");
-  const [percentageSymbol, setPercentageSymbol] = useState("%");
-  const [touch, setTouch] = useState("");
 
-  const totalPurity = goldRows.reduce(
-    (sum, row) => sum + parseFloat(row.purity || 0),
-    0
-  );
-  const totalBalance = parseFloat(fixedOpeningBalance) + totalPurity;
+  const fixedOpeningBalance = 10.0;
+
+  const [netWeight, setNetWeight] = useState("0.000");
+  const [touch, setTouch] = useState(""); 
+  const [percentageSymbol, setPercentageSymbol] = useState("%");
+
+  const [itemTouch, setItemTouch] = useState("");
+  const [itemPurity, setItemPurity] = useState("0.000");
 
   const calculatePurity = (w, t) =>
     !isNaN(w) && !isNaN(t) ? ((w * t) / 100).toFixed(3) : "";
@@ -52,40 +53,63 @@ const NewJobCard = () => {
     setDeductionRows(updated);
   };
 
+  const totalPurity = goldRows.reduce(
+    (sum, row) => sum + parseFloat(row.purity || 0),
+    0
+  );
+
+  const totalBalance = parseFloat(fixedOpeningBalance) + totalPurity;
+
+  const totalItemWeight = itemRows.reduce(
+    (sum, item) => sum + parseFloat(item.weight || 0),
+    0
+  );
+
+  const totalDeductionWeight = deductionRows.reduce(
+    (sum, deduction) => sum + parseFloat(deduction.weight || 0),
+    0
+  );
+
   useEffect(() => {
-    const totalItemWeight = itemRows.reduce(
-      (sum, item) => sum + parseFloat(item.weight || 0),
-      0
-    );
+    setItemPurity(calculatePurity(totalItemWeight, parseFloat(itemTouch)));
+  }, [totalItemWeight, itemTouch]);
 
-    const totalDeductionWeight = deductionRows.reduce(
-      (sum, deduction) => sum + parseFloat(deduction.weight || 0),
-      0
-    );
-
-    let calculatedNetWeight = totalItemWeight + totalDeductionWeight;
-
-    if (!isNaN(parseFloat(touch)) && calculatedNetWeight !== 0) {
-      const touchValue = parseFloat(touch);
-      if (percentageSymbol === "%") {
-        const percentageToAdd = (calculatedNetWeight * touchValue) / 100;
-        calculatedNetWeight += percentageToAdd;
-      } else if (percentageSymbol === "+") {
-        calculatedNetWeight += touchValue;
-      }
-    }
+  useEffect(() => {
+    let calculatedNetWeight = totalItemWeight - totalDeductionWeight;
     setNetWeight(format(calculatedNetWeight));
-  }, [itemRows, deductionRows, percentageSymbol, touch]);
+  }, [itemRows, deductionRows]);
+
+  const getFinalPurityWithAdjustment = () => {
+    const base = parseFloat(netWeight);
+
+    if (isNaN(base)) return "0.000";
+
+    const adjustment = parseFloat(touch);
+    if (isNaN(adjustment)) return format(base);
+
+    let finalValue = base;
+
+    if (percentageSymbol === "%") {
+      finalValue += (base * adjustment) / 100;
+    } else if (percentageSymbol === "+") {
+      finalValue += adjustment;
+    }
+
+    return format(finalValue);
+  };
+
+  const finalPurityForBalance = getFinalPurityWithAdjustment();
+
+  const ownerGivesBalance =
+    parseFloat(finalPurityForBalance) > parseFloat(totalBalance);
+
+  const balanceDifference = Math.abs(
+    parseFloat(finalPurityForBalance) - parseFloat(totalBalance)
+  );
 
   const symbolOptions = ["%", "+"];
   const itemOptions = ["Ring", "Chain", "Bangle"];
-  const stoneOptions = ["Stone", "Enamel", "Beeds", "Others"];
-
-  const ownerGivesBalance =
-    parseFloat(netWeight) > parseFloat(format(totalBalance));
-  const balanceDifference = Math.abs(
-    parseFloat(netWeight) - parseFloat(format(totalBalance))
-  );
+  const stoneOptions = ["Stone", "Enamel", "Beads", "Others"];
 
   return (
     <div className="container">
@@ -97,6 +121,7 @@ const NewJobCard = () => {
           <span className="header-label">Date:</span> {today}
         </div>
       </div>
+
       <div className="section">
         <label htmlFor="description" className="label">
           Description
@@ -110,6 +135,7 @@ const NewJobCard = () => {
           placeholder="Enter job description..."
         />
       </div>
+
       <div className="section">
         <h3 className="section-title">Gold Calculation</h3>
         {goldRows.map((row, i) => (
@@ -152,6 +178,7 @@ const NewJobCard = () => {
           <span className="total-purity-value">{format(totalPurity)}</span>
         </div>
       </div>
+
       <div className="section">
         <h3 className="section-title">Balance</h3>
         <div className="balance-block">
@@ -170,6 +197,7 @@ const NewJobCard = () => {
           </div>
         </div>
       </div>
+
       <div className="section">
         <h3 className="section-title">Item Delivery</h3>
         {itemRows.map((item, i) => (
@@ -201,7 +229,13 @@ const NewJobCard = () => {
         >
           +
         </button>
+        <div className="total-purity-container">
+          <span className="total-purity-label">Total Item Weight:</span>
+          <span className="total-purity-value">{format(totalItemWeight)}</span>
+        </div>
+
         <div className="deduction-section">
+          <h4>Deductions </h4>
           {deductionRows.map((deduction, i) => (
             <div key={i} className="deduction-row">
               <select
@@ -250,31 +284,65 @@ const NewJobCard = () => {
           >
             +
           </button>
+          <div className="total-purity-container">
+            <span className="total-purity-label">Total Stone Weight:</span>
+            <span className="total-purity-value">
+              {format(totalDeductionWeight)}
+            </span>
+          </div>
         </div>
+
         <div className="net-weight-display">
-          Net Weight = <span className="net-weight-value">{netWeight}</span>
+          <span className="header-label">Net Weight:</span>
+          <span className="net-weight-value" style={{ color: "blue" }}>
+            {netWeight}
+          </span>
         </div>
-        <div className="input-group-fluid">
-          <select
-            value={percentageSymbol}
-            onChange={(e) => setPercentageSymbol(e.target.value)}
-            className="select-small"
+
+        <div className="input-group-fluid" style={{ marginTop: "10px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
           >
-            {symbolOptions.map((symbol) => (
-              <option key={symbol} value={symbol}>
-                {symbol}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            placeholder="Touch"
-            value={touch}
-            onChange={(e) => setTouch(e.target.value)}
-            className="input"
-          />
+            <select
+              value={percentageSymbol}
+              onChange={(e) => setPercentageSymbol(e.target.value)}
+              className="select-small"
+            >
+              {symbolOptions.map((symbol) => (
+                <option key={symbol} value={symbol}>
+                  {symbol}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="number"
+              placeholder="Wastage Value"
+              value={touch}
+              onChange={(e) => setTouch(e.target.value)}
+              className="input"
+            />
+            <span className="operator">=</span>
+            <span className="net-weight-value" style={{ color: "red" }}>
+              {finalPurityForBalance}
+            </span>
+          </div>
         </div>
       </div>
+
+      <div
+        style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}
+      >
+        <Button variant="contained" color="success">
+          SAVE
+        </Button>
+      </div>
+
       {parseFloat(netWeight) !== 0 && (
         <div className="final-balance-section">
           {ownerGivesBalance ? (
@@ -297,12 +365,5 @@ const NewJobCard = () => {
     </div>
   );
 };
+
 export default NewJobCard;
-
-
-
-
-
-
-
-
