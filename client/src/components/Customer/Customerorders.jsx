@@ -176,8 +176,9 @@ const CustomerOrders = () => {
       const data = res.data;
 
       if (data?.orderdetails) {
-        const transformedOrders = data.orderdetails.map((order, index) => ({
-          orderId: `#ORD-${index + 1}`,
+        const transformedOrders = data.orderdetails.map((order) => ({
+          id: order.id,
+          orderId: `#ORD-${order.id}`,
           orderDate: new Date(),
           items: [
             {
@@ -186,12 +187,10 @@ const CustomerOrders = () => {
               weight: order.weight,
               status: order.status || "Pending",
               dueDate: formatDate(order.due_date),
-
-              imagePreviews: order.productImages?.length
-                ? order.productImages.map(
-                    (img) => `${BACKEND_SERVER_URL}/uploads/${img.filename}`
-                  )
-                : [],
+              imagePreviews:
+                order.productImages?.map(
+                  (img) => `${BACKEND_SERVER_URL}/uploads/${img.filename}`
+                ) || [],
             },
           ],
         }));
@@ -262,108 +261,132 @@ const CustomerOrders = () => {
     setItems(updatedItems);
   };
 
-  // const handleSave = () => {
-  //   if (editingOrder) {
-  //     setOrders(
-  //       orders.map((order) =>
-  //         order.orderId === editingOrder.orderId
-  //           ? {
-  //               ...order,
-  //               items: items.map((item) => ({
-  //                 itemName: item.itemName,
-  //                 description: item.description,
-  //                 weight: item.weight,
-  //                 dueDate: item.dueDate
-  //                   ? new Date(item.dueDate)
-  //                   : new Date(Date.now() + 7 * 86400000),
-  //                 status: item.status,
-  //                 imagePreview: item.imagePreview,
-  //               })),
-  //             }
-  //           : order
-  //       )
+  // const handleSave = async () => {
+  //   try {
+  //     const formData = new FormData();
+
+  //     formData.append("customer_id", customerId);
+
+  //     items.forEach((item, index) => {
+  //       formData.append("item_name", item.itemName);
+  //       formData.append("description", item.description);
+  //       formData.append("weight", item.weight);
+  //       formData.append("due_date", item.dueDate);
+
+  //       if (item.images && item.images.length > 0) {
+  //         item.images.forEach((file) => {
+  //           formData.append(`images_${index}[]`, file);
+  //         });
+  //       }
+  //     });
+
+  //     const res = await axios.post(
+  //       `${BACKEND_SERVER_URL}/api/customerOrder/create`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
   //     );
-  //     toast.success("Order updated successfully!");
-  //   } else {
-  //     const newOrderId = `#ORD-${orders.length + 1}`;
-  //     const newOrder = {
-  //       orderDate: new Date(),
-  //       orderId: newOrderId,
-  //       items: items.map((item) => ({
-  //         itemName: item.itemName,
-  //         description: item.description,
-  //         weight: item.weight,
-  //         dueDate: item.dueDate
-  //           ? new Date(item.dueDate)
-  //           : new Date(Date.now() + 7 * 86400000),
-  //         status: item.status,
-  //         imagePreview: item.imagePreview,
-  //       })),
-  //     };
-  //     setOrders([newOrder, ...orders]);
-  //     toast.success("New order created successfully!");
+
+  //     if (res.data?.data) {
+  //       toast.success("Customer order created successfully");
+  //       await fetchCustomerOrders();
+  //       handleClose();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error creating order:", error);
+  //     toast.error("Failed to create order");
   //   }
-  //   handleClose();
   // };
 
-  const handleSave = async () => {
-    try {
-      const formData = new FormData();
+ const handleSave = async () => {
+  try {
+    const formData = new FormData();
+    formData.append("customer_id", customerId);
 
-      formData.append("customer_id", customerId);
+    const isEditing = Boolean(editingOrder);
+    const item = items[0]; 
+    formData.append("item_name", item.itemName);
+    formData.append("description", item.description);
+    formData.append("weight", item.weight);
+    formData.append("due_date", item.dueDate);
+    formData.append("status", item.status);
 
-      items.forEach((item, index) => {
-        formData.append("item_name", item.itemName);
-        formData.append("description", item.description);
-        formData.append("weight", item.weight);
-        formData.append("due_date", item.dueDate);
-
-        if (item.images && item.images.length > 0) {
-          item.images.forEach((file) => {
-            formData.append(`images_${index}[]`, file);
-          });
-        }
+    if (item.images && item.images.length > 0) {
+      item.images.forEach((file) => {
+        formData.append("images", file);
       });
+    }
 
-      const res = await axios.post(
+    let response;
+    if (isEditing) {
+      const orderId = editingOrder.id;
+      response = await axios.put(
+        `${BACKEND_SERVER_URL}/api/customerOrder/update/${orderId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+    } else {
+      response = await axios.post(
         `${BACKEND_SERVER_URL}/api/customerOrder/create`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
+    }
 
-      if (res.data?.data) {
-        toast.success("Customer order created successfully");
+    if (response.data?.data) {
+      toast.success(isEditing ? "Order updated successfully" : "Order created successfully");
+      setTimeout(() => fetchCustomerOrders(), 500); 
+      handleClose();
+    }
+  } catch (error) {
+    console.error("Error saving order:", error);
+    toast.error("Failed to save order");
+  }
+};
+
+
+const handleEditOrder = (order) => {
+  const orderId = parseInt(order.orderId.replace("#ORD-", ""));
+  setEditingOrder({ ...order, id: orderId });
+
+  const item = order.items[0];
+  setItems([
+    {
+      ...item,
+      dueDate: item.dueDate
+        ? new Date(item.dueDate).toISOString().split("T")[0]
+        : "",
+      imagePreviews: item.imagePreviews || [],
+      images: [], 
+    },
+  ]);
+
+  handleOpen();
+};
+
+
+
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      const id = orderId.replace("#ORD-", "");
+      const res = await axios.delete(
+        `${BACKEND_SERVER_URL}/api/customerOrder/delete/${id}`
+      );
+      if (res.status === 200) {
+        toast.success("Order deleted successfully!");
         await fetchCustomerOrders();
-        handleClose();
       }
     } catch (error) {
-      console.error("Error creating order:", error);
-      toast.error("Failed to create order");
+      console.error("Error deleting order:", error);
+      toast.error("Failed to delete order");
     }
-  };
-
-  const handleEditOrder = (order) => {
-    setEditingOrder(order);
-
-    setItems(
-      order.items.map((item) => ({
-        ...item,
-
-        dueDate: item.dueDate
-          ? new Date(item.dueDate).toISOString().split("T")[0]
-          : "",
-      }))
-    );
-    handleOpen();
-  };
-
-  const handleDeleteOrder = (orderId) => {
-    setOrders(orders.filter((order) => order.orderId !== orderId));
-    toast.error("Order deleted successfully!");
   };
 
   const formatDate = (dateString) => {
@@ -817,6 +840,7 @@ const CustomerOrders = () => {
   //     </FullSizeImageModal>
   //   </Container>
   // );
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <ToastContainer
