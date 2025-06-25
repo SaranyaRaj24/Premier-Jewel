@@ -138,16 +138,69 @@ const createCustomerOrder = async (req, res) => {
 };
 
 
+// const updateCustomerOrder = async (req, res) => {
+//   try {
+//     const orderId = parseInt(req.params?.orderId?.toString());
+    
+//     const {
+//       item_name,
+//       description,
+//       weight,
+//       due_date,
+//       status
+//     } = req.body;
+
+//     const dataToUpdate = {};
+
+//     if (item_name !== undefined) dataToUpdate.item_name = item_name;
+//     if (description !== undefined) dataToUpdate.description = description;
+//     if (weight !== undefined) dataToUpdate.weight = parseFloat(weight);
+//     if (due_date !== undefined) {
+//       const parsedDate = new Date(due_date);
+//       if (isNaN(parsedDate.getTime())) {
+//         return res.status(400).json({ error: "Invalid due_date format" });
+//       }
+//       dataToUpdate.due_date = parsedDate;
+//     }
+//     if (status !== undefined) dataToUpdate.status = status;
+
+//     const updatedOrder = await prisma.customer_order.update({
+//       where: { id: orderId },
+//       data: dataToUpdate
+//     });
+
+//     if (req.files && req.files.length > 0) {
+//       const imageRecords = req.files.map(file => ({
+//         customer_order_id: orderId,
+//         filename: file.filename
+//       }));
+
+//       await prisma.product_multiple_images.createMany({
+//         data: imageRecords
+//       });
+//     }
+
+//     return res.status(200).json({
+//       message: "Order updated successfully",
+//       data: updatedOrder
+//     });
+
+//   } catch (error) {
+//     console.error("Error updating order:", error);
+//     return res.status(500).json({ error: "Failed to update order" });
+//   }
+// };
+
 const updateCustomerOrder = async (req, res) => {
   try {
     const orderId = parseInt(req.params?.orderId?.toString());
-    
+
     const {
       item_name,
       description,
       weight,
       due_date,
-      status
+      status,
     } = req.body;
 
     const dataToUpdate = {};
@@ -166,23 +219,27 @@ const updateCustomerOrder = async (req, res) => {
 
     const updatedOrder = await prisma.customer_order.update({
       where: { id: orderId },
-      data: dataToUpdate
+      data: dataToUpdate,
     });
 
     if (req.files && req.files.length > 0) {
-      const imageRecords = req.files.map(file => ({
+      await prisma.product_multiple_images.deleteMany({
+        where: { customer_order_id: orderId },
+      });
+
+      const imageRecords = req.files.map((file) => ({
         customer_order_id: orderId,
-        filename: file.filename
+        filename: file.filename,
       }));
 
       await prisma.product_multiple_images.createMany({
-        data: imageRecords
+        data: imageRecords,
       });
     }
 
     return res.status(200).json({
       message: "Order updated successfully",
-      data: updatedOrder
+      data: updatedOrder,
     });
 
   } catch (error) {

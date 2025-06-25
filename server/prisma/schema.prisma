@@ -22,7 +22,7 @@ model Customer {
   createdAt DateTime @default(now())
   bill      Bill[]
   transactions Transaction[] 
-  customerOrders customer_order[]
+  customerOrders customer_order[] 
 }
 
 model MasterItem {
@@ -190,16 +190,16 @@ model customer_order {
   weight Float
   image String?
   due_date DateTime?
-  status String @default("PENDING")
+  status String @default("Pending")
   created_at DateTime @default(now())
   updatedAt DateTime @default(now())
-  customers Customer @relation(fields: [customer_id],references: [id])
-  productImages product_multiple_images[]
+  customers Customer @relation(fields: [customer_id],references: [id],onDelete: Cascade)
+  productImages product_multiple_images[] 
 }
 
 model product_multiple_images {
   id Int @id @default(autoincrement())
   customer_order_id Int
   filename String
-  customerOrderDetails customer_order @relation(fields: [customer_order_id],references: [id])
+  customerOrderDetails customer_order @relation(fields: [customer_order_id],references: [id],onDelete: Cascade)
 }
