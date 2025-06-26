@@ -6,6 +6,7 @@ import Masteradditems from "./Masteradditems";
 import Masterjewelstock from "./Masterjewelstock";
 import Cashgold from "./Cashgold";
 import { FiLogOut, FiArrowLeft } from "react-icons/fi";
+import Touchentry from "./Touchentry";
 
 const Master = () => {
   const [activeTab, setActiveTab] = useState("customer");
@@ -20,7 +21,7 @@ const Master = () => {
   };
 
   const handleBack = () => {
-    navigate("/goldsmith");
+    navigate("/customer");
   };
 
 
@@ -103,6 +104,7 @@ const Master = () => {
           >
             Cash / Gold
           </button>
+          <button onClick={()=>handleTabChange("touchentries")}style={getNavButtonStyle("touchentries")}>Touch Entries</button>
         </div>
 
         <button onClick={handleLogout} style={logoutButton}>
@@ -117,6 +119,7 @@ const Master = () => {
         {activeTab === "items" && <Masteradditems />}
         {activeTab === "stock" && <Masterjewelstock />}
         {activeTab === "cashgold" && <Cashgold />}
+        {activeTab === "touchentries" && <Touchentry/>}
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -17,7 +16,6 @@ exports.createItem = async (req, res) => {
     res.status(500).json({ error: "Something went wrong." });
   }
 };
-
 
 exports.getItems = async (req, res) => {
   try {

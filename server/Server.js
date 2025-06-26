@@ -12,18 +12,17 @@ const billRoutes = require("./Routes/bill.routes");
 const jewelStockRoutes = require("./Routes/jewelstock.routes");
 const transactionRoutes = require("./Routes/transaction.routes");
 const entryRoutes = require("./Routes/cashgold.routes");
-const customerOrderRoutes = require('./Routes/customerOrder.routes')
+const customerOrderRoutes = require("./Routes/customerOrder.routes");
+const masterTouchRoutes = require("./Routes/mastertouch.routes");
 
-const path = require('path');
-
-
+const path = require("path");
 
 require("dotenv").config();
 
 const app = express();
-var morgan = require('morgan')
+var morgan = require("morgan");
 const PORT = process.env.PORT || 5002;
-app.use(morgan('dev'))
+app.use(morgan("dev"));
 app.use(cors());
 app.use(bodyParser.json());
 app.get("/", (req, res) => {
@@ -41,10 +40,9 @@ app.use("/api/bills", billRoutes);
 app.use("/api/jewel-stock", jewelStockRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/entries", entryRoutes);
-app.use("/api/customerOrder",customerOrderRoutes)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-
+app.use("/api/customerOrder", customerOrderRoutes);
+app.use("/api/master-touch", masterTouchRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
