@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Button from "@mui/material/Button";
@@ -22,8 +23,8 @@ const NewJobCard = () => {
   const fixedOpeningBalance = 10.0;
 
   const [netWeight, setNetWeight] = useState("0.000");
-  const [touch, setTouch] = useState(""); 
-  const [percentageSymbol, setPercentageSymbol] = useState("%");
+  const [touch, setTouch] = useState("");
+  const [percentageSymbol, setPercentageSymbol] = useState("Touch");
 
   const [itemTouch, setItemTouch] = useState("");
   const [itemPurity, setItemPurity] = useState("0.000");
@@ -81,18 +82,18 @@ const NewJobCard = () => {
 
   const getFinalPurityWithAdjustment = () => {
     const base = parseFloat(netWeight);
+    const value = parseFloat(touch);
 
-    if (isNaN(base)) return "0.000";
-
-    const adjustment = parseFloat(touch);
-    if (isNaN(adjustment)) return format(base);
+    if (isNaN(base) || isNaN(value)) return "0.000";
 
     let finalValue = base;
 
-    if (percentageSymbol === "%") {
-      finalValue = (base * adjustment) / 100;
+    if (percentageSymbol === "Touch") {
+      finalValue = (base * value) / 100;
+    } else if (percentageSymbol === "%") {
+      finalValue = base + (base * value) / 100;
     } else if (percentageSymbol === "+") {
-      finalValue += adjustment;
+      finalValue = base + value;
     }
 
     return format(finalValue);
@@ -107,7 +108,7 @@ const NewJobCard = () => {
     parseFloat(finalPurityForBalance) - parseFloat(totalBalance)
   );
 
-  const symbolOptions = ["%", "+"];
+  const symbolOptions = ["Touch", "%", "+"];
   const itemOptions = ["Ring", "Chain", "Bangle"];
   const stoneOptions = ["Stone", "Enamel", "Beads", "Others"];
 
@@ -308,7 +309,7 @@ const NewJobCard = () => {
               flexWrap: "wrap",
             }}
           >
-            <select
+            <select style={{width:"6rem"}}
               value={percentageSymbol}
               onChange={(e) => setPercentageSymbol(e.target.value)}
               className="select-small"
@@ -322,11 +323,12 @@ const NewJobCard = () => {
 
             <input
               type="number"
-              placeholder="Wastage Value"
+              placeholder="Enter Value"
               value={touch}
               onChange={(e) => setTouch(e.target.value)}
               className="input"
             />
+
             <span className="operator">=</span>
             <span className="net-weight-value" style={{ color: "red" }}>
               {finalPurityForBalance}
@@ -347,14 +349,14 @@ const NewJobCard = () => {
         <div className="final-balance-section">
           {ownerGivesBalance ? (
             <p className="balance-text-owner">
-              Owner should give balance:{" "}
+              Owner should give balance:
               <span className="balance-amount">
                 {format(balanceDifference)}
               </span>
             </p>
           ) : (
             <p className="balance-text-goldsmith">
-              Goldsmith should give balance:{" "}
+              Goldsmith should give balance:
               <span className="balance-amount">
                 {format(balanceDifference)}
               </span>

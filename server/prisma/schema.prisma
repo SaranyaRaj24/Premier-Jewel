@@ -31,7 +31,11 @@ model MasterItem {
   createdAt DateTime @default(now())
   items     Item[]   
 }
-
+model MasterTouch{
+  id        Int @id @default(autoincrement())
+  touch     Float
+  createdAt DateTime @default(now())
+}
 model CoinStock {
   id          Int       @id @default(autoincrement())
   coinType    String    
