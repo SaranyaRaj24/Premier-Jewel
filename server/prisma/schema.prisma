@@ -189,6 +189,8 @@ model Entry {
 model customer_order {
   id Int @id @default(autoincrement())
   customer_id Int
+  order_group_id Int
+
   item_name String
   description String
   weight Float
