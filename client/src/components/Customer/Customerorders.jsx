@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -129,7 +130,6 @@ const CustomerOrders = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const customerId = queryParams.get("id");
-
   const customerName = queryParams.get("name") || "Customer";
 
   const [open, setOpen] = useState(false);
@@ -140,7 +140,7 @@ const CustomerOrders = () => {
       itemName: "",
       description: "",
       weight: "",
-      dueDate: "",
+      dueDate: new Date().toISOString().split("T")[0], 
       images: [],
       imagePreviews: [],
       status: "Pending",
@@ -159,7 +159,7 @@ const CustomerOrders = () => {
         itemName: "",
         description: "",
         weight: "",
-        dueDate: "",
+        dueDate: new Date().toISOString().split("T")[0],
         images: [],
         imagePreviews: [],
         status: "Pending",
@@ -167,46 +167,43 @@ const CustomerOrders = () => {
     ]);
   };
 
-  
+  const fetchCustomerOrders = async () => {
+    try {
+      const res = await axios.get(
+        `${BACKEND_SERVER_URL}/api/customerOrder/getCustomerInfo/${customerId}`
+      );
+      const groupedData = res.data.data;
 
-const fetchCustomerOrders = async () => {
-  try {
-    const res = await axios.get(
-      `${BACKEND_SERVER_URL}/api/customerOrder/getCustomerInfo/${customerId}`
-    );
-    const groupedData = res.data.data;
+      const transformedOrders = Object.entries(groupedData).map(
+        ([groupId, items]) => ({
+          groupId,
+          orderId: `#ORD-GRP-${groupId}`,
+          orderDate: items[0]?.created_at || new Date(),
+          items: items.map((item) => ({
+            id: item.id,
+            itemName: item.item_name,
+            description: item.description,
+            weight: item.weight,
+            dueDate: formatDate(item.due_date),
+            status: item.status || "Pending",
+            imagePreviews:
+              item.productImages?.map(
+                (img) => `${BACKEND_SERVER_URL}/uploads/${img.filename}`
+              ) || [],
+            existingImages:
+              item.productImages?.map((img) => ({
+                id: img.id,
+                url: `${BACKEND_SERVER_URL}/uploads/${img.filename}`,
+              })) || [],
+          })),
+        })
+      );
 
-    const transformedOrders = Object.entries(groupedData).map(
-      ([groupId, items]) => ({
-        groupId,
-        orderId: `#ORD-GRP-${groupId}`,
-        orderDate: items[0]?.created_at || new Date(),
-        items: items.map((item) => ({
-          id: item.id,
-          itemName: item.item_name,
-          description: item.description,
-          weight: item.weight,
-          dueDate: formatDate(item.due_date),
-          status: item.status || "Pending",
-          imagePreviews:
-            item.productImages?.map(
-              (img) => `${BACKEND_SERVER_URL}/uploads/${img.filename}`
-            ) || [],
-          existingImages:
-            item.productImages?.map((img) => ({
-              id: img.id,
-              url: `${BACKEND_SERVER_URL}/uploads/${img.filename}`,
-            })) || [],
-        })),
-      })
-    );
-
-    setOrders(transformedOrders);
-  } catch (error) {
-    console.error("Error fetching customer orders:", error);
-  }
-};
-
+      setOrders(transformedOrders);
+    } catch (error) {
+      console.error("Error fetching customer orders:", error);
+    }
+  };
 
   useEffect(() => {
     if (customerId) fetchCustomerOrders();
@@ -248,7 +245,7 @@ const fetchCustomerOrders = async () => {
         itemName: "",
         description: "",
         weight: "",
-        dueDate: "",
+        dueDate: new Date().toISOString().split("T")[0], 
         images: [],
         imagePreviews: [],
         status: "Pending",
@@ -263,7 +260,6 @@ const fetchCustomerOrders = async () => {
     setItems(updatedItems);
   };
 
- 
   const formatForInput = (ddmmyyyyStr) => {
     if (!ddmmyyyyStr || !ddmmyyyyStr.includes("-")) return "";
     const [dd, mm, yyyy] = ddmmyyyyStr.split("-");
@@ -271,36 +267,35 @@ const fetchCustomerOrders = async () => {
   };
 
   const handleEditOrder = (order) => {
-  const groupId = order.groupId;
+    const groupId = order.groupId;
 
-  const fullItems = order.items.map((item) => ({
-    id: item.id,
-    itemName: item.itemName,
-    description: item.description,
-    weight: item.weight,
-    dueDate: formatForInput(item.dueDate),
-    status: item.status || "Pending",
-    imagePreviews: [...item.imagePreviews], // For preview rendering
-    existingImages: item.existingImages || [], // Real image {id, url}
-    images: [], // new uploads
-  }));
+    const fullItems = order.items.map((item) => ({
+      id: item.id,
+      itemName: item.itemName,
+      description: item.description,
+      weight: item.weight,
+      dueDate: formatForInput(item.dueDate),
+      status: item.status || "Pending",
+      imagePreviews: [...item.imagePreviews],
+      existingImages: item.existingImages || [],
+      images: [],
+    }));
 
-  setEditingOrder({
-    ...order,
-    groupId,
-    isEditingGroup: true,
-  });
+    setEditingOrder({
+      ...order,
+      groupId,
+      isEditingGroup: true,
+    });
 
-  setItems(fullItems);
-  handleOpen();
-};
-
+    setItems(fullItems);
+    handleOpen();
+  };
 
   const handleAddItemToGroup = (order) => {
     const groupId = order.groupId;
 
     setEditingOrder({
-      id: null, // (new item)
+      id: null,
       groupId,
       isAddToGroup: true,
     });
@@ -310,7 +305,7 @@ const fetchCustomerOrders = async () => {
         itemName: "",
         description: "",
         weight: "",
-        dueDate: "",
+        dueDate: new Date().toISOString().split("T")[0], 
         images: [],
         imagePreviews: [],
         status: "Pending",
@@ -321,21 +316,19 @@ const fetchCustomerOrders = async () => {
   };
 
   const handleDeleteOrder = async (groupId) => {
-  try {
-    const res = await axios.delete(
-      `${BACKEND_SERVER_URL}/api/customerOrder/delete/group/${groupId}`
-    );
-    if (res.status === 200) {
-      toast.success("Order group deleted successfully!");
-      await fetchCustomerOrders();
+    try {
+      const res = await axios.delete(
+        `${BACKEND_SERVER_URL}/api/customerOrder/delete/group/${groupId}`
+      );
+      if (res.status === 200) {
+        toast.success("Order group deleted successfully!");
+        await fetchCustomerOrders();
+      }
+    } catch (error) {
+      console.error("Error deleting order group:", error);
+      toast.error("Failed to delete order group");
     }
-  } catch (error) {
-    console.error("Error deleting order group:", error);
-    toast.error("Failed to delete order group");
-  }
-};
-
-
+  };
 
   const handleSave = async () => {
     try {
@@ -466,7 +459,7 @@ const fetchCustomerOrders = async () => {
     }
   };
 
-    return (
+  return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <ToastContainer
         position="top-right"
@@ -479,8 +472,6 @@ const fetchCustomerOrders = async () => {
         draggable
         pauseOnHover
       />
-
-      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -509,20 +500,11 @@ const fetchCustomerOrders = async () => {
         </Button>
       </Box>
 
-      {/* Orders List */}
       {orders.length === 0 ? (
         <Paper sx={{ p: 6, textAlign: "center", borderRadius: "12px" }}>
           <Typography variant="h6" color="textSecondary" gutterBottom>
             No orders found for {customerName}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddCircleOutline />}
-            onClick={handleOpen}
-            sx={{ mt: 2 }}
-          >
-            Create First Order
-          </Button>
         </Paper>
       ) : (
         orders.map((order, orderIdx) => (
@@ -568,21 +550,30 @@ const fetchCustomerOrders = async () => {
                 </Tooltip>
 
                 <Tooltip title="Delete Order">
-  <IconButton
-    color="error"
-    onClick={() => handleDeleteOrder(order.groupId)} 
-  >
-    <Delete />
-  </IconButton>
-</Tooltip>
-
+                  <IconButton
+                    color="error"
+                    onClick={() => handleDeleteOrder(order.groupId)}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </Box>
 
             <Divider sx={{ my: 2 }} />
             <TableContainer>
               <Table>
-                <TableHead sx={{ backgroundColor: "#f5f5f5 !important" }}>
+                <TableHead
+                  sx={{
+                    backgroundColor: "#e3f2fd",
+                    "& th": {
+                      backgroundColor: "#e3f2fd",
+                      color: "#0d47a1",
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                    },
+                  }}
+                >
                   <TableRow>
                     <TableCell>Item</TableCell>
                     <TableCell>Description</TableCell>
@@ -660,7 +651,6 @@ const fetchCustomerOrders = async () => {
         ))
       )}
 
-      {/* Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle
           sx={{
@@ -727,13 +717,13 @@ const fetchCustomerOrders = async () => {
               <TextField
                 label="Due Date"
                 type="date"
-                value={item.dueDate || ""}
+                value={item.dueDate || new Date().toISOString().split("T")[0]}
                 onChange={(e) => handleChange(index, "dueDate", e.target.value)}
                 size="small"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: new Date().toISOString().split("T")[0] }}
-                required
+             
+               
               />
               <TextField
                 select
@@ -748,7 +738,6 @@ const fetchCustomerOrders = async () => {
                 <MenuItem value="Delivered">Delivered</MenuItem>
               </TextField>
 
-              {/* Image Upload + Preview */}
               <Box>
                 <input
                   accept="image/*"
@@ -770,46 +759,11 @@ const fetchCustomerOrders = async () => {
                   </Button>
                 </label>
 
-                {/* {item.imagePreviews.length > 0 && (
-                  <Box
-                    sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}
-                  >
-                    {item.imagePreviews.map((preview, pIdx) => (
-                      <Box key={pIdx} sx={{ position: "relative" }}>
-                        <ImagePreview
-                          onClick={() => handleOpenImageModal(preview)}
-                        >
-                          <img src={preview} alt={`preview-${pIdx}`} />
-                        </ImagePreview>
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            const updatedItems = [...items];
-                            updatedItems[index].imagePreviews.splice(pIdx, 1);
-                            updatedItems[index].images.splice(pIdx, 1);
-                            setItems(updatedItems);
-                          }}
-                          sx={{
-                            position: "absolute",
-                            top: -6,
-                            right: -6,
-                            backgroundColor: "#fff",
-                            border: "1px solid #ccc",
-                            p: 0.2,
-                          }}
-                        >
-                          <Close fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Box>
-                )} */}
                 {(item.existingImages?.length || item.imagePreviews?.length) >
                   0 && (
                   <Box
                     sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}
                   >
-                    {/* Existing Images */}
                     {item.existingImages?.map((img, pIdx) => (
                       <Box
                         key={`existing-${pIdx}`}
@@ -844,7 +798,6 @@ const fetchCustomerOrders = async () => {
                       </Box>
                     ))}
 
-                    {/* New Images */}
                     {item.imagePreviews
                       ?.slice(item.existingImages?.length)
                       .map((preview, pIdx) => (
@@ -949,459 +902,3 @@ const fetchCustomerOrders = async () => {
 };
 
 export default CustomerOrders;
-
-//537-556
-{
-  /* <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                        >
-                          <ImagePreview
-                            onClick={() =>
-                              item.imagePreview &&
-                              handleOpenImageModal(item.imagePreview)
-                            }
-                          >
-                            {item.imagePreview ? (
-                              <img
-                                src={item.imagePreview}
-                                alt={item.itemName || "Item image"}
-                              />
-                            ) : (
-                              <ImageIcon color="action" />
-                            )}
-                          </ImagePreview>
-                          {item.itemName}
-                        </Box> */
-}
-
-
-
-// return (
-  //   <Container maxWidth="xl" sx={{ py: 4 }}>
-  //     <ToastContainer
-  //       position="top-right"
-  //       autoClose={3000}
-  //       hideProgressBar={false}
-  //       newestOnTop={false}
-  //       closeOnClick
-  //       rtl={false}
-  //       pauseOnFocusLoss
-  //       draggable
-  //       pauseOnHover
-  //     />
-  //     <Box
-  //       sx={{
-  //         display: "flex",
-  //         justifyContent: "space-between",
-  //         alignItems: "center",
-  //         mb: 4,
-  //       }}
-  //     >
-  //       <Box>
-  //         <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-  //           Order History of {customerName}
-  //         </Typography>
-  //       </Box>
-  //       <Button
-  //         variant="contained"
-  //         startIcon={<AddCircleOutline />}
-  //         onClick={handleOpen}
-  //         sx={{
-  //           bgcolor: "primary.main",
-  //           "&:hover": { bgcolor: "primary.dark" },
-  //           px: 3,
-  //           py: 1.5,
-  //           borderRadius: "8px",
-  //           textTransform: "none",
-  //         }}
-  //       >
-  //         New Order
-  //       </Button>
-  //     </Box>
-
-  //     {orders.length === 0 ? (
-  //       <Paper sx={{ p: 6, textAlign: "center", borderRadius: "12px" }}>
-  //         <Typography variant="h6" color="textSecondary" gutterBottom>
-  //           No orders found for {customerName}
-  //         </Typography>
-  //         <Button
-  //           variant="contained"
-  //           startIcon={<AddCircleOutline />}
-  //           onClick={handleOpen}
-  //           sx={{ mt: 2 }}
-  //         >
-  //           Create First Order
-  //         </Button>
-  //       </Paper>
-  //     ) : (
-  //       orders.map((order, orderIdx) => (
-  //         <OrderCard key={order.orderId || orderIdx}>
-  //           {" "}
-  //           <Box
-  //             sx={{
-  //               display: "flex",
-  //               justifyContent: "space-between",
-  //               alignItems: "center",
-  //               mb: 2,
-  //               flexWrap: "wrap",
-  //               gap: 2,
-  //             }}
-  //           >
-  //             <Box>
-  //               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-  //                 Order {order.orderId}
-  //               </Typography>
-  //               <Typography variant="body2" color="text.secondary">
-  //                 Order Date: {formatDate(order.orderDate)}
-  //               </Typography>
-  //             </Box>
-  //             <Box sx={{ display: "flex", gap: 1 }}>
-  //               <Chip
-  //                 label={`${order.items.length} ${
-  //                   order.items.length === 1 ? "item" : "items"
-  //                 }`}
-  //                 variant="outlined"
-  //                 color="primary"
-  //               />
-  //               <Tooltip title="Edit Order">
-  //                 <IconButton
-  //                   color="info"
-  //                   onClick={() => handleEditOrder(order)}
-  //                 >
-  //                   <Edit />
-  //                 </IconButton>
-  //               </Tooltip>
-  //               <Tooltip title="Delete Order">
-  //                 <IconButton
-  //                   color="error"
-  //                   onClick={() => handleDeleteOrder(order.orderId)}
-  //                 >
-  //                   <Delete />
-  //                 </IconButton>
-  //               </Tooltip>
-  //             </Box>
-  //           </Box>
-  //           <Divider sx={{ my: 2 }} />
-  //           <TableContainer>
-  //             <Table>
-  //               <TableHead
-  //                 sx={{
-  //                   backgroundColor: "#f5f5f5 !important",
-  //                   "& th": {
-  //                     fontWeight: 700,
-  //                     color: "#000 !important",
-  //                     backgroundColor: "#f5f5f5 !important",
-  //                   },
-  //                 }}
-  //               >
-  //                 <TableRow>
-  //                   <TableCell>Item</TableCell>
-  //                   <TableCell>Description</TableCell>
-  //                   <TableCell align="center">Weight</TableCell>
-  //                   <TableCell align="center">Due Date</TableCell>
-  //                   <TableCell align="center">Status</TableCell>
-  //                 </TableRow>
-  //               </TableHead>
-  //               <TableBody>
-  //                 {order.items.map((item, iIdx) => (
-  //                   <StyledTableRow key={iIdx}>
-  //                     <TableCell>
-
-  //                       <Box
-  //                         sx={{
-  //                           display: "flex",
-  //                           flexDirection: "column",
-  //                           gap: 1,
-  //                         }}
-  //                       >
-  //                         <Box
-  //                           sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
-  //                         >
-  //                           {item.imagePreviews?.length > 0 && (
-  //                             <Box
-  //                               sx={{
-  //                                 mt: 1,
-  //                                 display: "flex",
-  //                                 gap: 1,
-  //                                 flexWrap: "wrap",
-  //                               }}
-  //                             >
-  //                               {item.imagePreviews.map((preview, pIdx) => (
-  //                                 <Box key={pIdx} sx={{ position: "relative" }}>
-  //                                   <ImagePreview
-  //                                     onClick={() =>
-  //                                       handleOpenImageModal(preview)
-  //                                     }
-  //                                   >
-  //                                     <img
-  //                                       src={preview}
-  //                                       alt={`preview-${pIdx}`}
-  //                                     />
-  //                                   </ImagePreview>
-  //                                   <IconButton
-  //                                     size="small"
-  //                                     onClick={() => {
-  //                                       const updatedItems = [...items];
-  //                                       updatedItems[
-  //                                         index
-  //                                       ].imagePreviews.splice(pIdx, 1);
-  //                                       updatedItems[index].images.splice(
-  //                                         pIdx,
-  //                                         1
-  //                                       );
-  //                                       setItems(updatedItems);
-  //                                     }}
-  //                                     sx={{
-  //                                       position: "absolute",
-  //                                       top: -6,
-  //                                       right: -6,
-  //                                       backgroundColor: "#fff",
-  //                                       border: "1px solid #ccc",
-  //                                       p: 0.2,
-  //                                     }}
-  //                                   >
-  //                                     <Close fontSize="small" />
-  //                                   </IconButton>
-  //                                 </Box>
-  //                               ))}
-  //                             </Box>
-  //                           )}
-  //                         </Box>
-
-  //                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-  //                           {item.itemName}
-  //                         </Typography>
-  //                       </Box>
-  //                     </TableCell>
-
-  //                     <TableCell>
-  //                       <Typography
-  //                         variant="body2"
-  //                         sx={{ whiteSpace: "pre-line" }}
-  //                       >
-  //                         {item.description}
-  //                       </Typography>
-  //                     </TableCell>
-  //                     <TableCell align="center">{item.weight}</TableCell>
-  //                     <TableCell align="center">
-  //                       {item.dueDate || "N/A"}
-  //                     </TableCell>
-
-  //                     <TableCell align="center">
-  //                       <StatusChip
-  //                         label={item.status}
-  //                         status={item.status}
-  //                         icon={getStatusIcon(item.status)}
-  //                       />
-  //                     </TableCell>
-  //                   </StyledTableRow>
-  //                 ))}
-  //               </TableBody>
-  //             </Table>
-  //           </TableContainer>
-  //         </OrderCard>
-  //       ))
-  //     )}
-
-  //     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-  //       <DialogTitle
-  //         sx={{
-  //           bgcolor: "primary.main",
-  //           color: "white",
-  //           display: "flex",
-  //           justifyContent: "space-between",
-  //           alignItems: "center",
-  //         }}
-  //       >
-  //         <Typography variant="h6">
-  //           {editingOrder ? "Edit Order" : "Create New Order"}
-  //         </Typography>
-  //         <IconButton onClick={handleClose} sx={{ color: "white" }}>
-  //           <Close />
-  //         </IconButton>
-  //       </DialogTitle>
-  //       <DialogContent dividers sx={{ py: 3 }}>
-  //         <Typography
-  //           variant="subtitle1"
-  //           gutterBottom
-  //           sx={{ fontWeight: 600, mb: 2 }}
-  //         >
-  //           Order Items
-  //         </Typography>
-  //         {items.map((item, index) => (
-  //           <Box
-  //             key={index}
-  //             sx={{
-  //               display: "grid",
-  //               gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-  //               gap: 2,
-  //               mb: 3,
-  //               alignItems: "center",
-  //             }}
-  //           >
-  //             <TextField
-  //               label="Item Name"
-  //               value={item.itemName}
-  //               onChange={(e) =>
-  //                 handleChange(index, "itemName", e.target.value)
-  //               }
-  //               variant="outlined"
-  //               size="small"
-  //               fullWidth
-  //               required
-  //             />
-  //             <TextField
-  //               label="Description"
-  //               value={item.description}
-  //               onChange={(e) =>
-  //                 handleChange(index, "description", e.target.value)
-  //               }
-  //               variant="outlined"
-  //               size="small"
-  //               fullWidth
-  //               required
-  //               multiline
-  //               rows={3}
-  //             />
-  //             <TextField
-  //               label="Weight (grams)"
-  //               type="text"
-  //               value={item.weight}
-  //               onChange={(e) => handleChange(index, "weight", e.target.value)}
-  //               variant="outlined"
-  //               size="small"
-  //               fullWidth
-  //               required
-  //             />
-  //             <TextField
-  //               label="Due Date"
-  //               type="date"
-  //               value={
-  //                 item.dueDate
-  //                   ? new Date(item.dueDate).toISOString().split("T")[0]
-  //                   : ""
-  //               }
-  //               onChange={(e) => handleChange(index, "dueDate", e.target.value)}
-  //               variant="outlined"
-  //               size="small"
-  //               fullWidth
-  //               InputLabelProps={{ shrink: true }}
-  //               inputProps={{
-  //                 min: new Date().toISOString().split("T")[0],
-  //               }}
-  //               required
-  //             />
-  //             <TextField
-  //               select
-  //               label="Status"
-  //               value={item.status}
-  //               onChange={(e) => handleChange(index, "status", e.target.value)}
-  //               variant="outlined"
-  //               size="small"
-  //               fullWidth
-  //               required
-  //             >
-  //               <MenuItem value="Pending">Pending</MenuItem>
-  //               <MenuItem value="Delivered">Delivered</MenuItem>
-  //             </TextField>
-  //             <Box>
-  //               <input
-  //                 accept="image/*"
-  //                 multiple
-  //                 style={{ display: "none" }}
-  //                 id={`image-upload-${index}`}
-  //                 type="file"
-  //                 onChange={(e) => handleImageChange(index, e)}
-  //               />
-
-  //               <label htmlFor={`image-upload-${index}`}>
-  //                 <Button
-  //                   variant="outlined"
-  //                   component="span"
-  //                   startIcon={<ImageIcon />}
-  //                   fullWidth
-  //                   sx={{ height: "40px" }}
-  //                 >
-  //                   Upload Image
-  //                 </Button>
-  //               </label>
-  //               {item.imagePreview && (
-  //                 <Box sx={{ mt: 1, display: "flex", alignItems: "center" }}>
-  //                   <ImagePreview
-  //                     onClick={() => handleOpenImageModal(item.imagePreview)}
-  //                   >
-  //                     <img src={item.imagePreview} alt="Preview" />
-  //                   </ImagePreview>
-  //                   <IconButton
-  //                     size="small"
-  //                     onClick={() => {
-  //                       handleChange(index, "image", null);
-  //                       handleChange(index, "imagePreview", null);
-  //                     }}
-  //                     sx={{ ml: 1 }}
-  //                   >
-  //                     <Close fontSize="small" />
-  //                   </IconButton>
-  //                 </Box>
-  //               )}
-  //             </Box>
-  //             {items.length > 1 && (
-  //               <Tooltip title="Remove item">
-  //                 <IconButton
-  //                   onClick={() => handleRemoveItem(index)}
-  //                   color="error"
-  //                   sx={{ alignSelf: "center" }}
-  //                 >
-  //                   <Close fontSize="small" />
-  //                 </IconButton>
-  //               </Tooltip>
-  //             )}
-  //           </Box>
-  //         ))}
-  //         <Button
-  //           variant="outlined"
-  //           startIcon={<Add />}
-  //           onClick={handleAddItem}
-  //           sx={{ mt: 1 }}
-  //         >
-  //           Add Another Item
-  //         </Button>
-  //       </DialogContent>
-  //       <DialogActions sx={{ px: 3, py: 2 }}>
-  //         <Button onClick={handleClose} sx={{ color: "text.secondary" }}>
-  //           Cancel
-  //         </Button>
-  //         <Button
-  //           variant="contained"
-  //           onClick={handleSave}
-  //           disabled={
-  //             !items.every(
-  //               (item) =>
-  //                 item.itemName &&
-  //                 item.description &&
-  //                 item.weight &&
-  //                 item.dueDate
-  //             )
-  //           }
-  //           sx={{
-  //             bgcolor: "primary.main",
-  //             "&:hover": { bgcolor: "primary.dark" },
-  //             px: 3,
-  //             textTransform: "none",
-  //           }}
-  //         >
-  //           {editingOrder ? "Save Changes" : "Save Order"}
-  //         </Button>
-  //       </DialogActions>
-  //     </Dialog>
-
-  //     <FullSizeImageModal open={openImageModal} onClose={handleCloseImageModal}>
-  //       <Box>
-  //         <img src={selectedImage} alt="Full size preview" />
-  //         <CloseButton onClick={handleCloseImageModal}>
-  //           <Close />
-  //         </CloseButton>
-  //       </Box>
-  //     </FullSizeImageModal>
-  //   </Container>
-  // );
