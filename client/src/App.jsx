@@ -12,7 +12,7 @@ import Master from "./components/Master/Master";
 import MasterCustomer from "./components/Master/Mastercustomer";
 import Customertrans from "./components/Customer/Customertrans";
 import Jobcard from "./components/Goldsmith/Jobcard";
-import AddCustomer from "./components/Billing/Addcustomer";
+// import AddCustomer from "./components/Billing/Addcustomer";
 import CustomerReport from "./components/Report/customer.report";
 import Overallreport from "./components/Report/overallreport";
 import Jobcardreport from "./components/Report/jobcardreport";
@@ -178,7 +178,7 @@ function App() {
 
         <Route path="/master" element={<Master />} />
         <Route path="/mastercustomer" element={<MasterCustomer />} />
-        <Route path="/addcustomer" element={<AddCustomer />} />
+        {/* <Route path="/addcustomer" element={<AddCustomer />} /> */}
       </Routes>
     </BrowserRouter>
   );
