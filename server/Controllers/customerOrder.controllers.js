@@ -276,6 +276,26 @@ const deleteImageById = async (req, res) => {
     return res.status(500).json({ error: "Failed to delete image" });
   }
 };
+const getAllCustomerOrders = async (req, res) => {
+  try {
+    const orders = await prisma.customer_order.findMany({
+      include: {
+        productImages: { select: { filename: true } },
+        customers: { select: { name: true } }, 
+      },
+    });
+
+    res.status(200).json({
+      message: "All customer orders fetched",
+      data: orders,
+    });
+  } catch (error) {
+    console.error("Error fetching all orders:", error);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+};
+
+
 
 module.exports = {
   getCustomerOrder,
@@ -284,5 +304,6 @@ module.exports = {
   deleteCustomerOrder,
   addExtraItemToOrderGroup,
   deleteImageById,
+  getAllCustomerOrders
 };
 
