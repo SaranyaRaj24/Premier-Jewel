@@ -430,12 +430,26 @@ const CustomerOrders = () => {
       }
 
       await fetchCustomerOrders();
+      window.dispatchEvent(new Event("refresh-notifications"));
+
       handleClose();
     } catch (error) {
       console.error("Save error:", error);
       toast.error("Failed to save order");
     }
   };
+  useEffect(() => {
+  const handleRefresh = () => {
+    fetchCustomerOrders();
+  };
+
+  window.addEventListener("refresh-customer-orders", handleRefresh);
+
+  return () => {
+    window.removeEventListener("refresh-customer-orders", handleRefresh);
+  };
+}, []);
+
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

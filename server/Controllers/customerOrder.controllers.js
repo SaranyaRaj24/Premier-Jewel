@@ -1,8 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-
-
 const getCustomerOrder = async (req, res) => {
   try {
     const { customer_id } = req.params;
@@ -40,8 +38,6 @@ const getCustomerOrder = async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch orders" });
   }
 };
-
-
 
 const createCustomerOrder = async (req, res) => {
   try {
@@ -110,19 +106,13 @@ const createCustomerOrder = async (req, res) => {
 const updateCustomerOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     if (isNaN(parseInt(id))) {
       return res.status(400).json({ error: "Invalid order ID" });
     }
 
-    const {
-      item_name,
-      description,
-      weight,
-      due_date,
-      status,
-      order_group_id,
-    } = req.body;
+    const { item_name, description, weight, due_date, status, order_group_id } =
+      req.body;
 
     const existingOrder = await prisma.customer_order.findUnique({
       where: { id: parseInt(id) },
@@ -135,9 +125,7 @@ const updateCustomerOrder = async (req, res) => {
       order_group_id &&
       parseInt(order_group_id) !== existingOrder.order_group_id
     ) {
-      return res
-        .status(400)
-        .json({ error: "Order group ID mismatch" });
+      return res.status(400).json({ error: "Order group ID mismatch" });
     }
 
     const dataToUpdate = {};
@@ -148,9 +136,7 @@ const updateCustomerOrder = async (req, res) => {
     if (due_date !== undefined) {
       const parsedDate = new Date(due_date);
       if (isNaN(parsedDate.getTime())) {
-        return res
-          .status(400)
-          .json({ error: "Invalid due date format" });
+        return res.status(400).json({ error: "Invalid due date format" });
       }
       dataToUpdate.due_date = parsedDate;
     }
@@ -178,12 +164,9 @@ const updateCustomerOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating order:", error);
-    return res
-      .status(500)
-      .json({ error: "Failed to update customer order" });
+    return res.status(500).json({ error: "Failed to update customer order" });
   }
 };
-
 
 const addExtraItemToOrderGroup = async (req, res) => {
   try {
@@ -198,7 +181,7 @@ const addExtraItemToOrderGroup = async (req, res) => {
         item_name,
         description,
         weight: parseFloat(weight),
-        due_date: null,
+        due_date: dueDate,
         order_group_id: parseInt(order_group_id),
       },
     });
@@ -281,7 +264,7 @@ const getAllCustomerOrders = async (req, res) => {
     const orders = await prisma.customer_order.findMany({
       include: {
         productImages: { select: { filename: true } },
-        customers: { select: { name: true } }, 
+        customers: { select: { name: true } },
       },
     });
 
@@ -295,7 +278,68 @@ const getAllCustomerOrders = async (req, res) => {
   }
 };
 
+const getDueTomorrowOrders = async (req, res) => {
+  try {
+    const today = new Date(); //(ref for calculating tmrw's date)
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1); //(increase the day by 1 , so tmrw)(if today june 27 means, now it is june 28)
+    tomorrow.setHours(0, 0, 0, 0); //(resets to 12 am)
 
+    const nextDay = new Date(tomorrow);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const orders = await prisma.customer_order.findMany({
+      where: {
+        due_date: {
+          gte: tomorrow, //(greater than or =)
+          lt: nextDay, //(less than)
+          
+        },
+        status: "Pending",
+      },
+      include: {
+        customers: true,
+      },
+    });
+
+    const notifications = orders.map((order) => ({
+      id: order.id,
+      message: `${order.item_name} order due tomorrow for ${
+        order.customers?.name || "Unknown Customer"
+      }`,
+      date: order.due_date,
+      status: order.status,
+    }));
+
+    res.json({ message: "Notifications fetched", data: notifications });
+  } catch (error) {
+    console.error("Error fetching notifications", error);
+    res.status(500).json({ error: "Failed to fetch due orders" });
+  }
+};
+
+const makeStatusAsDelivered = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existingOrder = await prisma.customer_order.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    const updatedOrder = await prisma.customer_order.update({
+      where: { id: parseInt(id) },
+      data: { status: "Delivered" },
+    });
+
+    return res.json({
+      message: "Order marked as delivered",
+      data: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error marking order delivered:", error);
+    return res.status(500).json({ error: "Failed to update order status" });
+  }
+};
 
 module.exports = {
   getCustomerOrder,
@@ -304,6 +348,7 @@ module.exports = {
   deleteCustomerOrder,
   addExtraItemToOrderGroup,
   deleteImageById,
-  getAllCustomerOrders
+  getAllCustomerOrders,
+  getDueTomorrowOrders,
+  makeStatusAsDelivered,
 };
-

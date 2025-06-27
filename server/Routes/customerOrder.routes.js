@@ -7,6 +7,8 @@ const {
   addExtraItemToOrderGroup,
   deleteImageById,
   getAllCustomerOrders,
+  getDueTomorrowOrders,
+  makeStatusAsDelivered,
 } = require("../Controllers/customerOrder.controllers");
 const router = express.Router();
 const upload = require("../Utils/fileUpload");
@@ -22,5 +24,7 @@ router.put("/update/:id", upload.any(), updateCustomerOrder);
 router.delete("/delete/:orderId", deleteCustomerOrder);
 router.delete("/image/:imageId", deleteImageById);
 router.get("/all-customer-orders", getAllCustomerOrders);
+router.get('/dueTomorrow',getDueTomorrowOrders)
+router.patch('/markAsDelivered/:id',makeStatusAsDelivered)
 
 module.exports = router;
