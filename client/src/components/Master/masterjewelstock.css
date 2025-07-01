@@ -104,13 +104,11 @@
     z-index: 1000;
   }
   
-  .popup-content {
+  .popup-contenttt {
     background-color: #fff;
     padding: 30px;
     border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
+    width: 40%;
     overflow-y: auto;
     position: relative;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);

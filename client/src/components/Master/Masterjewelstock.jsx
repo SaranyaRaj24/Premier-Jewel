@@ -105,7 +105,7 @@ const Masterjewelstock = () => {
 
       {showFormPopup && (
         <div className="popup-overlay">
-          <div className="popup-content">
+          <div className="popup-contenttt">
             <h3>Enter Jewel Stock Details</h3>
             <button
               className="close-btn"

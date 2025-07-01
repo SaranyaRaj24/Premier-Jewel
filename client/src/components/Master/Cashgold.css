@@ -81,15 +81,16 @@
     z-index: 1000;
   }
   
-  .popup-content {
+  .popup-cont {
     background-color: white;
     padding: 20px;
     border-radius: 5px;
     width: 400px;
+   
     position: relative;
   }
   
-  .popup-content h3 {
+  .popup-cont h3 {
     margin-top: 0;
     color: #333;
   }

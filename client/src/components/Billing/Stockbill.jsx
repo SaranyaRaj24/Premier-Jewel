@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Autocomplete,
   TextField,
@@ -17,6 +16,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { MdDeleteForever } from "react-icons/md";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { BACKEND_SERVER_URL } from "../../Config/Config";
 import "./billing.css";
 
 const Billing = () => {
@@ -32,11 +32,6 @@ const Billing = () => {
     })
   );
 
-  const initialProductWeights = {
-    Chain: 400,
-    Ring: 300,
-  };
-
   const [rows, setRows] = useState([
     {
       date: new Date().toISOString().slice(0, 10),
@@ -47,10 +42,23 @@ const Billing = () => {
       amount: "",
     },
   ]);
-
   const [billDetailRows, setBillDetailRows] = useState([
     { productName: "", wt: "", stWt: "", awt: "", percent: "", fwt: "" },
   ]);
+  const [jewelStock, setJewelStock] = useState([]);
+
+  useEffect(() => {
+    const fetchJewelStock = async () => {
+      try {
+        const response = await fetch(`${BACKEND_SERVER_URL}/api/jewel-stock`);
+        const data = await response.json();
+        setJewelStock(data);
+      } catch (error) {
+        console.error("Failed to fetch jewel stock:", error);
+      }
+    };
+    fetchJewelStock();
+  }, []);
 
   const handleAddRow = () => {
     setRows([
@@ -88,52 +96,12 @@ const Billing = () => {
     const percent = parseFloat(updated[index].percent) || 0;
 
     const awt = wt - stWt;
-    updated[index].awt = awt.toFixed(3);
-    updated[index].fwt = ((awt * percent) / 100).toFixed(3);
+    updated[index].awt = awt ? awt.toFixed(3) : "";
+    updated[index].fwt =
+      awt && percent ? ((awt * percent) / 100).toFixed(3) : "";
 
     setBillDetailRows(updated);
   };
-
-  const handleRowChange = (index, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[index][field] = value;
-
-    const goldRate = parseFloat(updatedRows[index].goldRate) || 0;
-    const givenGold = parseFloat(updatedRows[index].givenGold) || 0;
-    const touch = parseFloat(updatedRows[index].touch) || 0;
-    const amount = parseFloat(updatedRows[index].amount) || 0;
-
-    let calculatedPurity = 0;
-
-    if (goldRate > 0 && amount > 0) {
-      calculatedPurity = amount / goldRate;
-    } else if (givenGold > 0 && touch > 0) {
-      calculatedPurity = givenGold * (touch / 100);
-    }
-
-    updatedRows[index].purityWeight = calculatedPurity.toFixed(3);
-    setRows(updatedRows);
-  };
-
-  const totalFWT = billDetailRows.reduce(
-    (total, row) => total + (parseFloat(row.fwt) || 0),
-    0
-  );
-
-  const totalReceivedPurity = rows.reduce(
-    (acc, row) => acc + (parseFloat(row.purityWeight) || 0),
-    0
-  );
-
-  const pureBalance = totalFWT - totalReceivedPurity;
-
-  const lastGoldRate = [...rows]
-    .reverse()
-    .find((row) => parseFloat(row.goldRate))?.goldRate;
-
-  const cashBalance = lastGoldRate
-    ? (parseFloat(lastGoldRate) * pureBalance).toFixed(2)
-    : "0.00";
 
   const inputStyle = {
     minWidth: "130px",
@@ -209,7 +177,7 @@ const Billing = () => {
                 <TableCell className="th">S.No</TableCell>
                 <TableCell className="th">Product Name</TableCell>
                 <TableCell className="th">Wt</TableCell>
-                <TableCell className="th">St.WT</TableCell>
+                <TableCell className="th">St. WT</TableCell>
                 <TableCell className="th">AWT</TableCell>
                 <TableCell className="th">%</TableCell>
                 <TableCell className="th">FWT</TableCell>
@@ -233,8 +201,11 @@ const Billing = () => {
                       }
                       inputProps={{ style: inputStyle }}
                     >
-                      <MenuItem value="Chain">Chain</MenuItem>
-                      <MenuItem value="Ring">Ring</MenuItem>
+                      {jewelStock.map((item) => (
+                        <MenuItem key={item.id} value={item.jewelName}>
+                          {item.jewelName}
+                        </MenuItem>
+                      ))}
                     </TextField>
                   </TableCell>
                   <TableCell className="td">
@@ -292,9 +263,11 @@ const Billing = () => {
               ))}
             </TableBody>
           </Table>
-
           <Box sx={{ textAlign: "right", marginTop: 1, fontWeight: "bold" }}>
-            Total FWT: {totalFWT.toFixed(3)}
+            Total FWT:{" "}
+            {billDetailRows
+              .reduce((total, row) => total + (parseFloat(row.fwt) || 0), 0)
+              .toFixed(3)}
           </Box>
 
           <Box className="items-section" sx={{ marginTop: 2 }}>
@@ -334,42 +307,30 @@ const Billing = () => {
                           size="small"
                           type="date"
                           value={row.date}
-                          onChange={(e) =>
-                            handleRowChange(index, "date", e.target.value)
-                          }
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
                       <TableCell className="td">
                         <TextField
                           size="small"
-                          type="number"
                           value={row.goldRate}
-                          onChange={(e) =>
-                            handleRowChange(index, "goldRate", e.target.value)
-                          }
+                          type="number"
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
                       <TableCell className="td">
                         <TextField
                           size="small"
-                          type="number"
                           value={row.givenGold}
-                          onChange={(e) =>
-                            handleRowChange(index, "givenGold", e.target.value)
-                          }
+                          type="number"
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
                       <TableCell className="td">
                         <TextField
                           size="small"
-                          type="number"
                           value={row.touch}
-                          onChange={(e) =>
-                            handleRowChange(index, "touch", e.target.value)
-                          }
+                          type="number"
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
@@ -377,18 +338,14 @@ const Billing = () => {
                         <TextField
                           size="small"
                           value={row.purityWeight}
-                          disabled
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
                       <TableCell className="td">
                         <TextField
                           size="small"
-                          type="number"
                           value={row.amount}
-                          onChange={(e) =>
-                            handleRowChange(index, "amount", e.target.value)
-                          }
+                          type="number"
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
@@ -412,8 +369,9 @@ const Billing = () => {
 
           <Box className="closing-balance">
             <div className="flex">
-              <strong>Cash Balance: {cashBalance}</strong>
-              <strong>Pure Balance: {pureBalance.toFixed(3)}</strong>
+              <strong>Excess Cash Balance: 0.00</strong>
+              <strong>Excess Pure: 0.000</strong>
+              <strong>Pure Balance: 0.000</strong>
             </div>
           </Box>
 
@@ -434,27 +392,38 @@ const Billing = () => {
             <TableRow>
               <TableCell className="th">S.No</TableCell>
               <TableCell className="th">Product</TableCell>
-              <TableCell className="th">Remaining Weight</TableCell>
+              <TableCell className="th">Available</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.keys(initialProductWeights)
-              .filter((product) =>
-                billDetailRows.some((row) => row.productName === product)
+            {jewelStock
+              .filter((item) =>
+                billDetailRows.some((row) => row.productName === item.jewelName)
               )
-              .map((product, index) => {
+              .map((item, index) => {
                 const totalUsed = billDetailRows
-                  .filter((row) => row.productName === product)
+                  .filter((row) => row.productName === item.jewelName)
                   .reduce((acc, row) => acc + (parseFloat(row.wt) || 0), 0);
 
-                const remaining =
-                  (initialProductWeights[product] || 0) - totalUsed;
+                const originalWeight = parseFloat(item.weight) || 0;
+                const remaining = Math.max(originalWeight - totalUsed, 0);
 
                 return (
                   <TableRow key={index}>
                     <TableCell className="td">{index + 1}</TableCell>
-                    <TableCell className="td">{product}</TableCell>
-                    <TableCell className="td">{remaining.toFixed(3)}</TableCell>
+                    <TableCell className="td">{item.jewelName}</TableCell>
+                    <TableCell className="td">
+                      <div style={{ fontSize: "14px", lineHeight: "1.3" }}>
+                        {/* <div>
+                          <strong>Available:</strong>{" "}
+                          {originalWeight.toFixed(3)}
+                        </div> */}
+                        <div style={{ color: "green" }}>
+                          {/* <strong>Remaining:</strong>  */}
+                          {remaining.toFixed(3)}
+                        </div>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 );
               })}
