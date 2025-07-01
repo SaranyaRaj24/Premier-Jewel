@@ -133,7 +133,7 @@ function Cashgold() {
 
       {showFormPopup && (
         <div className="popup-overlay">
-          <div className="popup-content">
+          <div className="popup-cont">
             <h3>Enter Cash or Gold Details</h3>
             <button
               className="close-btn"

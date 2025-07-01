@@ -24,6 +24,7 @@ import Receipt from "./components/ReceiptVoucher/receiptvoucher";
 import Customerorders from "./components/Customer/Customerorders";
 import Orderreport from "./components/Report/orderreport";
 import Newjobcard from "./components/Goldsmith/Newjobcard";
+import StockBill from "./components/Billing/Stockbill";
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
             </PageWithNavbar>
           }
         />
+        <Route path="/stockbill" element={<PageWithNavbar><StockBill/></PageWithNavbar>}></Route>
         <Route
           path="/report"
           element={
