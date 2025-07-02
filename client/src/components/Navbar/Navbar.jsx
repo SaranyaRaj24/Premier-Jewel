@@ -65,7 +65,7 @@ const Navbar = () => {
           <span style={logoText}>AGR</span>
         </div>
 
-        {["Master", "Customer", "Goldsmith","Stock", "Bill", "Receipt Voucher"].map(
+        {["Master", "Customer", "Goldsmith","Stock", "Bill", "Receipt Voucher","Bullion"].map(
           (label) => {
             const path = `/${label.replace(/\s+/g, "").toLowerCase()}`;
             return (
