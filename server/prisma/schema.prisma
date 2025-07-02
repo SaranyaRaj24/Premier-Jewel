@@ -214,4 +214,25 @@ model MasterBullion{
   name  String
   phone String?
   address String?
+  purchases BullionPurchase[]
+}
+model BullionPurchase {
+  id           Int             @id @default(autoincrement())
+  bullion      MasterBullion   @relation(fields: [bullionId], references: [id])
+  bullionId    Int
+  grams        Float
+  touch        Float
+  purity       Float
+  rate         Float
+  amount       Float
+  balance      Float
+  createdAt    DateTime        @default(now())
+  givenDetails GivenDetail[] 
+}
+model GivenDetail {
+  id                Int             @id @default(autoincrement())
+  amount            Float
+  grams             Float
+  bullionPurchase   BullionPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade) 
+  purchaseId        Int
 }
