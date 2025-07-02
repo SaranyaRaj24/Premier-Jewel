@@ -25,6 +25,9 @@ import Customerorders from "./components/Customer/Customerorders";
 import Orderreport from "./components/Report/orderreport";
 import Newjobcard from "./components/Goldsmith/Newjobcard";
 import StockBill from "./components/Billing/Stockbill";
+import Goldsmithcard from "./components/Goldsmith/goldsmithcard"
+import MasterBullion from "./components/Master/Masterbullion";
+import Bullion from "./components/Bullion/Bullion";
 
 function App() {
   return (
@@ -49,6 +52,15 @@ function App() {
           }
         />
         <Route
+          path="/goldsmithcard/:id/:name"
+          element={
+            <PageWithNavbar>
+              <Goldsmithcard />
+            </PageWithNavbar>
+          }
+        />
+
+        <Route
           path="/bill"
           element={
             <PageWithNavbar>
@@ -56,7 +68,14 @@ function App() {
             </PageWithNavbar>
           }
         />
-        <Route path="/stockbill" element={<PageWithNavbar><StockBill/></PageWithNavbar>}></Route>
+        <Route
+          path="/stockbill"
+          element={
+            <PageWithNavbar>
+              <StockBill />
+            </PageWithNavbar>
+          }
+        ></Route>
         <Route
           path="/report"
           element={
@@ -149,7 +168,7 @@ function App() {
           path="/newjobcard/:id/:name"
           element={
             <PageWithNavbar>
-         <Newjobcard/>
+              <Newjobcard />
             </PageWithNavbar>
           }
         />
@@ -177,9 +196,11 @@ function App() {
             </PageWithNavbar>
           }
         />
+        <Route path="/bullion" element={<PageWithNavbar><Bullion/></PageWithNavbar>}></Route>
 
         <Route path="/master" element={<Master />} />
         <Route path="/mastercustomer" element={<MasterCustomer />} />
+        <Route path="/masterbullion" element={<MasterBullion/>}></Route>
         {/* <Route path="/addcustomer" element={<AddCustomer />} /> */}
       </Routes>
     </BrowserRouter>

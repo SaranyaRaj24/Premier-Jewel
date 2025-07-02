@@ -209,3 +209,9 @@ model product_multiple_images {
   filename String
   customerOrderDetails customer_order @relation(fields: [customer_order_id],references: [id],onDelete: Cascade)
 }
+model MasterBullion{
+  id   Int @id @default(autoincrement())
+  name  String
+  phone String?
+  address String?
+}

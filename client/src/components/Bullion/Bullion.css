@@ -1,0 +1,23 @@
+.bullion-container {
+    padding: 20px;
+  }
+  
+  .input-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  .given-entry {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  
+  .given-input {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+    gap: 8px;
+  }
+  

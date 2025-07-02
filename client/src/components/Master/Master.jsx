@@ -7,6 +7,7 @@ import Masterjewelstock from "./Masterjewelstock";
 import Cashgold from "./Cashgold";
 import { FiLogOut, FiArrowLeft } from "react-icons/fi";
 import Touchentry from "./Touchentry";
+import MasterBullion from "./Masterbullion";
 
 const Master = () => {
   const [activeTab, setActiveTab] = useState("customer");
@@ -104,7 +105,18 @@ const Master = () => {
           >
             Cash / Gold
           </button>
-          <button onClick={()=>handleTabChange("touchentries")}style={getNavButtonStyle("touchentries")}>Touch Entries</button>
+          <button
+            onClick={() => handleTabChange("touchentries")}
+            style={getNavButtonStyle("touchentries")}
+          >
+            Touch Entries
+          </button>
+          <button
+            onClick={() => handleTabChange("bullion")}
+            style={getNavButtonStyle("bullion")}
+          >
+            Bullion 
+          </button>
         </div>
 
         <button onClick={handleLogout} style={logoutButton}>
@@ -119,7 +131,8 @@ const Master = () => {
         {activeTab === "items" && <Masteradditems />}
         {activeTab === "stock" && <Masterjewelstock />}
         {activeTab === "cashgold" && <Cashgold />}
-        {activeTab === "touchentries" && <Touchentry/>}
+        {activeTab === "touchentries" && <Touchentry />}
+        {activeTab === "bullion" && <MasterBullion/>}
       </div>
     </div>
   );

@@ -1,13 +1,18 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Button from "@mui/material/Button";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from "@mui/material";
 import "./NewJobCard.css";
 
 const format = (val) =>
   isNaN(parseFloat(val)) ? "" : parseFloat(val).toFixed(3);
 
-const NewJobCard = () => {
+const NewJobCard = ({ onClose }) => {
   const { name } = useParams();
   const today = new Date().toLocaleDateString("en-IN");
 
@@ -113,259 +118,300 @@ const NewJobCard = () => {
   const stoneOptions = ["Stone", "Enamel", "Beads", "Others"];
 
   return (
-    <div className="container">
-      <div className="header">
-        <div className="header-item">
-          <span className="header-label">Name:</span> {name}
-        </div>
-        <div className="header-item">
-          <span className="header-label">Date:</span> {today}
-        </div>
-      </div>
+    <Dialog
+      open={true}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xl"
+      scroll="paper"
+      sx={{
+        "& .MuiDialog-paper": {
+          width: "95%",
+          minWidth: "800px",
+        },
+      }}
+    >
+      <DialogContent>
+        <div className="container">
+          <div className="header">
+            <div className="header-item">
+              <span className="header-label">Name:</span> {name}
+            </div>
+            <div className="header-item">
+              <span className="header-label">Date:</span> {today}
+            </div>
+          </div>
 
-      <div className="section">
-        <label htmlFor="description" className="label">
-          Description
-        </label>
-        <textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows="3"
-          className="textarea"
-          placeholder="Enter job description..."
-        />
-      </div>
-
-      <div className="section">
-        <h3 className="section-title">Gold Calculation</h3>
-        {goldRows.map((row, i) => (
-          <div key={i} className="row">
-            <input
-              type="number"
-              placeholder="Weight"
-              value={row.weight}
-              onChange={(e) => handleGoldRowChange(i, "weight", e.target.value)}
-              className="input"
-            />
-            <span className="operator">x</span>
-            <input
-              type="number"
-              placeholder="Touch"
-              value={row.touch}
-              onChange={(e) => handleGoldRowChange(i, "touch", e.target.value)}
-              className="input"
-            />
-            <span className="operator">=</span>
-            <input
-              type="text"
-              readOnly
-              placeholder="Purity"
-              value={format(row.purity)}
-              className="input-read-only"
+          <div className="section">
+            <label htmlFor="description" className="label">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows="3"
+              className="textarea"
+              placeholder="Enter job description..."
             />
           </div>
-        ))}
-        <button
-          onClick={() =>
-            setGoldRows([...goldRows, { weight: "", touch: "", purity: "" }])
-          }
-          className="circle-button"
-        >
-          +
-        </button>
-        <div className="total-purity-container">
-          <span className="total-purity-label">Total Purity:</span>
-          <span className="total-purity-value">{format(totalPurity)}</span>
-        </div>
-      </div>
 
-      <div className="section">
-        <h3 className="section-title">Balance</h3>
-        <div className="balance-block">
-          <div className="balance-display-row">
-            <span className="balance-label">Opening Balance:</span>
-            <span className="balance-value">{format(fixedOpeningBalance)}</span>
-          </div>
-          <div className="balance-display-row">
-            <span className="balance-label">Total Purity:</span>
-            <span className="balance-value">{format(totalPurity)}</span>
-          </div>
-          <div>----------</div>
-          <div className="balance-display-row">
-            <span className="balance-label">Total Balance:</span>
-            <span className="balance-value">{format(totalBalance)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="section">
-        <h3 className="section-title">Item Delivery</h3>
-        {itemRows.map((item, i) => (
-          <div key={i} className="row">
-            <input
-              type="number"
-              placeholder="Item Weight"
-              value={item.weight}
-              onChange={(e) => handleItemRowChange(i, "weight", e.target.value)}
-              className="input"
-            />
-            <select
-              value={item.name}
-              onChange={(e) => handleItemRowChange(i, "name", e.target.value)}
-              className="select"
-            >
-              <option value="">Select Item</option>
-              {itemOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
-        <button
-          onClick={() => setItemRows([...itemRows, { weight: "", name: "" }])}
-          className="circle-button"
-        >
-          +
-        </button>
-        <div className="total-purity-container">
-          <span className="total-purity-label">Total Item Weight:</span>
-          <span className="total-purity-value">{format(totalItemWeight)}</span>
-        </div>
-
-        <div className="deduction-section">
-          <h4>Deductions </h4>
-          {deductionRows.map((deduction, i) => (
-            <div key={i} className="deduction-row">
-              <select
-                value={deduction.type}
-                onChange={(e) =>
-                  handleDeductionChange(i, "type", e.target.value)
-                }
-                className="deduction-select"
-              >
-                {stoneOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {deduction.type === "Others" && (
+          <div className="section">
+            <h3 className="section-title">Gold Calculation</h3>
+            {goldRows.map((row, i) => (
+              <div key={i} className="row">
+                <input
+                  type="number"
+                  placeholder="Weight"
+                  value={row.weight}
+                  onChange={(e) =>
+                    handleGoldRowChange(i, "weight", e.target.value)
+                  }
+                  className="input"
+                />
+                <span className="operator">x</span>
+                <input
+                  type="number"
+                  placeholder="Touch"
+                  value={row.touch}
+                  onChange={(e) =>
+                    handleGoldRowChange(i, "touch", e.target.value)
+                  }
+                  className="input"
+                />
+                <span className="operator">=</span>
                 <input
                   type="text"
-                  placeholder="Specify type"
-                  value={deduction.customType}
-                  onChange={(e) =>
-                    handleDeductionChange(i, "customType", e.target.value)
-                  }
-                  className="deduction-input"
+                  readOnly
+                  placeholder="Purity"
+                  value={format(row.purity)}
+                  className="input-read-only"
                 />
-              )}
-              <input
-                type="number"
-                value={deduction.weight}
-                onChange={(e) =>
-                  handleDeductionChange(i, "weight", e.target.value)
-                }
-                className="deduction-input"
-                placeholder="Weight"
-              />
-            </div>
-          ))}
-          <button
-            onClick={() =>
-              setDeductionRows([
-                ...deductionRows,
-                { type: "Stone", customType: "", weight: "" },
-              ])
-            }
-            className="circle-button"
-          >
-            +
-          </button>
-          <div className="total-purity-container">
-            <span className="total-purity-label">Total Stone Weight:</span>
-            <span className="total-purity-value">
-              {format(totalDeductionWeight)}
-            </span>
-          </div>
-        </div>
-
-        <div className="net-weight-display">
-          <span className="header-label">Net Weight:</span>
-          <span className="net-weight-value" style={{ color: "blue" }}>
-            {netWeight}
-          </span>
-        </div>
-
-        <div className="input-group-fluid" style={{ marginTop: "10px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <select style={{width:"6rem"}}
-              value={percentageSymbol}
-              onChange={(e) => setPercentageSymbol(e.target.value)}
-              className="select-small"
+              </div>
+            ))}
+            <button
+              onClick={() =>
+                setGoldRows([
+                  ...goldRows,
+                  { weight: "", touch: "", purity: "" },
+                ])
+              }
+              className="circle-button"
             >
-              {symbolOptions.map((symbol) => (
-                <option key={symbol} value={symbol}>
-                  {symbol}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="number"
-              placeholder="Enter Value"
-              value={touch}
-              onChange={(e) => setTouch(e.target.value)}
-              className="input"
-            />
-
-            <span className="operator">=</span>
-            <span className="net-weight-value" style={{ color: "red" }}>
-              {finalPurityForBalance}
-            </span>
+              +
+            </button>
+            <div className="total-purity-container">
+              <span className="total-purity-label">Total Purity:</span>
+              <span className="total-purity-value">{format(totalPurity)}</span>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div
-        style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}
-      >
-        <Button variant="contained" color="success">
-          SAVE
-        </Button>
-      </div>
+          <div className="section">
+            <h3 className="section-title">Balance</h3>
+            <div className="balance-block">
+              <div className="balance-display-row">
+                <span className="balance-label">Opening Balance:</span>
+                <span className="balance-value">
+                  {format(fixedOpeningBalance)}
+                </span>
+              </div>
+              <div className="balance-display-row">
+                <span className="balance-label">Total Purity:</span>
+                <span className="balance-value">{format(totalPurity)}</span>
+              </div>
+              <div>----------</div>
+              <div className="balance-display-row">
+                <span className="balance-label">Total Balance:</span>
+                <span className="balance-value">{format(totalBalance)}</span>
+              </div>
+            </div>
+          </div>
 
-      {parseFloat(netWeight) !== 0 && (
-        <div className="final-balance-section">
-          {ownerGivesBalance ? (
-            <p className="balance-text-owner">
-              Owner should give balance:
-              <span className="balance-amount">
-                {format(balanceDifference)}
+          <div className="section">
+            <h3 className="section-title">Item Delivery</h3>
+            {itemRows.map((item, i) => (
+              <div key={i} className="row">
+                <input
+                  type="number"
+                  placeholder="Item Weight"
+                  value={item.weight}
+                  onChange={(e) =>
+                    handleItemRowChange(i, "weight", e.target.value)
+                  }
+                  className="input"
+                />
+                <select
+                  value={item.name}
+                  onChange={(e) =>
+                    handleItemRowChange(i, "name", e.target.value)
+                  }
+                  className="select"
+                >
+                  <option value="">Select Item</option>
+                  {itemOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <button
+              onClick={() =>
+                setItemRows([...itemRows, { weight: "", name: "" }])
+              }
+              className="circle-button"
+            >
+              +
+            </button>
+            <div className="total-purity-container">
+              <span className="total-purity-label">Total Item Weight:</span>
+              <span className="total-purity-value">
+                {format(totalItemWeight)}
               </span>
-            </p>
-          ) : (
-            <p className="balance-text-goldsmith">
-              Goldsmith should give balance:
-              <span className="balance-amount">
-                {format(balanceDifference)}
+            </div>
+
+            <div className="deduction-section">
+              <h4>Deductions</h4>
+              {deductionRows.map((deduction, i) => (
+                <div key={i} className="deduction-row">
+                  <select
+                    value={deduction.type}
+                    onChange={(e) =>
+                      handleDeductionChange(i, "type", e.target.value)
+                    }
+                    className="deduction-select"
+                  >
+                    {stoneOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  {deduction.type === "Others" && (
+                    <input
+                      type="text"
+                      placeholder="Specify type"
+                      value={deduction.customType}
+                      onChange={(e) =>
+                        handleDeductionChange(i, "customType", e.target.value)
+                      }
+                      className="deduction-input"
+                    />
+                  )}
+                  <input
+                    type="number"
+                    value={deduction.weight}
+                    onChange={(e) =>
+                      handleDeductionChange(i, "weight", e.target.value)
+                    }
+                    className="deduction-input"
+                    placeholder="Weight"
+                  />
+                </div>
+              ))}
+              <button
+                onClick={() =>
+                  setDeductionRows([
+                    ...deductionRows,
+                    { type: "Stone", customType: "", weight: "" },
+                  ])
+                }
+                className="circle-button"
+              >
+                +
+              </button>
+              <div className="total-purity-container">
+                <span className="total-purity-label">Total Stone Weight:</span>
+                <span className="total-purity-value">
+                  {format(totalDeductionWeight)}
+                </span>
+              </div>
+            </div>
+
+            <div className="net-weight-display">
+              <span className="header-label">Net Weight:</span>
+              <span className="net-weight-value" style={{ color: "blue" }}>
+                {netWeight}
               </span>
-            </p>
+            </div>
+
+            <div className="input-group-fluid" style={{ marginTop: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <select
+                  style={{ width: "6rem" }}
+                  value={percentageSymbol}
+                  onChange={(e) => setPercentageSymbol(e.target.value)}
+                  className="select-small"
+                >
+                  {symbolOptions.map((symbol) => (
+                    <option key={symbol} value={symbol}>
+                      {symbol}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  placeholder="Enter Value"
+                  value={touch}
+                  onChange={(e) => setTouch(e.target.value)}
+                  className="input"
+                />
+
+                <span className="operator">=</span>
+                <span className="net-weight-value" style={{ color: "red" }}>
+                  {finalPurityForBalance}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {parseFloat(netWeight) !== 0 && (
+            <div className="final-balance-section">
+              {ownerGivesBalance ? (
+                <p className="balance-text-owner">
+                  Owner should give balance:
+                  <span className="balance-amount">
+                    {format(balanceDifference)}
+                  </span>
+                </p>
+              ) : (
+                <p className="balance-text-goldsmith">
+                  Goldsmith should give balance:
+                  <span className="balance-amount">
+                    {format(balanceDifference)}
+                  </span>
+                </p>
+              )}
+            </div>
           )}
         </div>
-      )}
-    </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "20px",
+          }}
+        >
+          <Button variant="contained" color="success">
+            SAVE
+          </Button>
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>CANCEL</Button>
+      </DialogActions>
+    </Dialog>
   );
 };
-
 export default NewJobCard;
+
+

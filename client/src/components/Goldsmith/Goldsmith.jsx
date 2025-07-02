@@ -193,7 +193,7 @@ const Goldsmith = () => {
                   <TableCell align="center">
                     <Tooltip title="View Jobcard">
                       <Link
-                        to={`/newjobcard/${goldsmith.id}/${goldsmith.name}`}
+                        to={`/goldsmithcard/${goldsmith.id}/${goldsmith.name}`}
                         state={{
                           phone: goldsmith.phone,
                           address: goldsmith.address,
