@@ -65,7 +65,7 @@ const Navbar = () => {
           <span style={logoText}>AGR</span>
         </div>
 
-        {["Master", "Customer", "Goldsmith","Stock", "Bill", "Receipt Voucher","Bullion"].map(
+        {["Master", "Customer", "Goldsmith","Stock", "Bill","Bullion"].map(
           (label) => {
             const path = `/${label.replace(/\s+/g, "").toLowerCase()}`;
             return (
@@ -124,9 +124,9 @@ const Navbar = () => {
               {[
                 ["Daily Sales Report", "/report"],
                 ["Customer Report", "/customerreport"],
-                ["Overall Report", "/overallreport"],
-                ["Jobcard Report", "/jobcardddReport"],
-                ["Receipt Report", "/receiptreport"],
+                // ["Overall Report", "/overallreport"],
+                // ["Jobcard Report", "/jobcardddReport"],
+                // ["Receipt Report", "/receiptreport"],
                 ["Order Report","/orderreport"]
               ].map(([name, path]) => (
                 <a
