@@ -29,7 +29,7 @@ model MasterItem {
   id        Int      @id @default(autoincrement())
   itemName  String
   createdAt DateTime @default(now())
-  items     Item[]   
+  // items     Item[]   
 }
 model MasterTouch{
   id        Int @id @default(autoincrement())
@@ -62,50 +62,40 @@ model StockLog {
   coinStockId Int
 }
 
+// model JobCard {
+//   id          Int       @id @default(autoincrement())
+//   date        DateTime
+//   description String?
+//   goldsmithId Int
+//   goldsmith   Goldsmith @relation(fields: [goldsmithId], references: [id])
+//   items       Item[]
+//   createdAt   DateTime  @default(now())
+//   updatedAt   DateTime  @updatedAt
+// } 
 
-model Goldsmith {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  address   String?
-  createdAt DateTime @default(now())
-  jobCards  JobCard[]  
-}
-
-model JobCard {
-  id          Int       @id @default(autoincrement())
-  date        DateTime
-  description String?
-  goldsmithId Int
-  goldsmith   Goldsmith @relation(fields: [goldsmithId], references: [id])
-  items       Item[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-} 
-
-model Item {
-  id                  Int               @id @default(autoincrement())
-  masterItemId        Int
-  masterItem          MasterItem        @relation(fields: [masterItemId], references: [id])
-  jobCardId           Int
-  jobCard             JobCard           @relation(fields: [jobCardId], references: [id])
-  originalGivenWeight Float
-  givenWeight         Float
-  touch               Float
-  estimateWeight      Float
-  finalWeight         Float?
-  wastage             Float?
-  purity              Float?
-  additionalWeights   AdditionalWeight[]
-}
-model AdditionalWeight {
-  id     Int    @id @default(autoincrement())
-  name   String
-  weight Float
-  itemId Int
-  operators String
-  item   Item   @relation(fields: [itemId], references: [id])
-}
+// model Item {
+//   id                  Int               @id @default(autoincrement())
+//   masterItemId        Int
+//   masterItem          MasterItem        @relation(fields: [masterItemId], references: [id])
+//   jobCardId           Int
+//   jobCard             JobCard           @relation(fields: [jobCardId], references: [id])
+//   originalGivenWeight Float
+//   givenWeight         Float
+//   touch               Float
+//   estimateWeight      Float
+//   finalWeight         Float?
+//   wastage             Float?
+//   purity              Float?
+//   additionalWeights   AdditionalWeight[]
+// }
+// model AdditionalWeight {
+//   id     Int    @id @default(autoincrement())
+//   name   String
+//   weight Float
+//   itemId Int
+//   operators String
+//   item   Item   @relation(fields: [itemId], references: [id])
+// }
 
 
 model Bill {
@@ -235,4 +225,78 @@ model GivenDetail {
   grams             Float
   bullionPurchase   BullionPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade) 
   purchaseId        Int
+}
+
+model Goldsmith {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  assignments  WorkAssignment[] 
+  
+  
+}
+model WorkAssignment {
+  id               Int               @id @default(autoincrement())
+  title            String
+  date             DateTime          @default(now())
+  description      String?
+
+  artisanId        Int
+  artisan          Goldsmith           @relation(fields: [artisanId], references: [id])
+
+  openingBalance   Float             @default(0.0)
+  totalInputPurity Float             @default(0.0)
+  totalBalance     Float             @default(0.0)
+
+  netWeight        Float?
+  itemTouch        Float?
+  adjustmentType   String?          
+  finalPurity      Float?
+  balanceDirection String?          
+  balanceAmount    Float?
+  wastage          Float? 
+
+  metalInputs      MetalInput[]      @relation("AssignmentMetalInput")
+  finishedProducts FinishedProduct[] @relation("AssignmentFinishedProduct")
+  materialLosses   MaterialLoss[]    @relation("AssignmentMaterialLoss")
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model MetalInput {
+  id             Int           @id @default(autoincrement())
+  weight         Float
+  touch          Float
+  purity         Float
+
+  assignmentId   Int
+  assignment     WorkAssignment @relation("AssignmentMetalInput", fields: [assignmentId], references: [id],onDelete: Cascade)
+
+  createdAt      DateTime       @default(now())
+}
+
+model FinishedProduct {
+  id             Int           @id @default(autoincrement())
+  weight         Float
+  itemType       String
+
+  assignmentId   Int
+  assignment     WorkAssignment @relation("AssignmentFinishedProduct", fields: [assignmentId], references: [id],onDelete: Cascade)
+
+  createdAt      DateTime       @default(now())
+}
+
+model MaterialLoss {
+  id             Int           @id @default(autoincrement())
+  type           String       
+  customType     String?     
+  weight         Float
+
+  assignmentId   Int
+  assignment     WorkAssignment @relation("AssignmentMaterialLoss", fields: [assignmentId], references: [id],onDelete: Cascade)
+
+  createdAt      DateTime       @default(now())
 }
