@@ -137,7 +137,7 @@ const Stock = () => {
           Please ensure the backend server is running on **`{BACKEND_SERVER_URL}
      
         </p>
-        <p>Check your browser's console and network tab for more details.</p>
+
       </div>
     );
   }
@@ -208,8 +208,7 @@ const Stock = () => {
             ) : (
               <tr>
                 <td colSpan="6">
-                  No finished products found in stock. Adjust filters or check
-                  backend data.
+               No finished products in stock.  
                 </td>
               </tr>
             )}
