@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./jobcarddd.css";
+import "./Jobcarddd.css";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 const LOCAL_STORAGE_KEY = "jobcardEntries";
