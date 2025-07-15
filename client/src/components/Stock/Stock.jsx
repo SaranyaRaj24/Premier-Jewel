@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import "./stock.css";
+import "./Stock.css";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Stock = () => {
