@@ -11,7 +11,7 @@ import {
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./NewJobCard.css";
+import "./Newjobcard.css";
 
 const format = (val) =>
   isNaN(parseFloat(val)) ? "" : parseFloat(val).toFixed(3);
