@@ -17,7 +17,7 @@ import { MdDeleteForever } from "react-icons/md";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
-import "./billing.css";
+import "./Billing.css";
 
 const Billing = () => {
   const [customers] = useState([{ customer_id: 1, customer_name: "John Doe" }]);
