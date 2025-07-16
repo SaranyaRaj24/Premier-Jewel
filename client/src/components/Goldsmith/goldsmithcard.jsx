@@ -63,7 +63,6 @@ const GoldsmithDetails = () => {
   };
 
   const handleSaveJobcard = (newJobcardData) => {
-   
     if (newJobcardData) {
       setJobcards((prev) => {
         const existingIndex = prev.findIndex(
@@ -111,7 +110,7 @@ const GoldsmithDetails = () => {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography
-          variant="h6"
+          variant="h5"
           gutterBottom
           sx={{ fontWeight: "bold", textAlign: "center" }}
         >
@@ -194,8 +193,8 @@ const GoldsmithDetails = () => {
                   <TableCell rowSpan={2}>TB</TableCell>
                   <TableCell colSpan={2}>Item Delivery</TableCell>
                   <TableCell rowSpan={2}>Total Stone WT</TableCell>
-                  <TableCell rowSpan={2}>Wastage</TableCell>{" "}
-             
+                  <TableCell rowSpan={2}>Wastage</TableCell>
+                  <TableCell rowSpan={2}>Balance Owed By</TableCell>
                   <TableCell rowSpan={2}>Balance</TableCell>
                   <TableCell rowSpan={2}>Actions</TableCell>
                 </TableRow>
@@ -230,13 +229,19 @@ const GoldsmithDetails = () => {
                       ? materialLoss.weight.toFixed(3)
                       : "-";
                   const displayWastage =
-                    jc.wastage != null 
-                      ? jc.wastage.toFixed(3)
-                      : "-";
+                    jc.wastage != null ? jc.wastage.toFixed(3) : "-";
                   const displayBalanceAmount =
                     jc.balanceAmount != null
                       ? jc.balanceAmount.toFixed(3)
                       : "-";
+
+                  const balanceColor =
+                    jc.balanceDirection === "Owner" ? "red" : "green";
+
+                  const balanceOwedByText =
+                    jc.balanceDirection === "Artisan"
+                      ? "Goldsmith"
+                      : jc.balanceDirection;
 
                   return (
                     <TableRow key={jc.id} hover>
@@ -261,11 +266,14 @@ const GoldsmithDetails = () => {
                       </TableCell>
                       <TableCell align="center">{displayItemWeight}</TableCell>
                       <TableCell align="center">{displayStoneWeight}</TableCell>
+                      <TableCell align="center">{displayWastage}</TableCell>
                       <TableCell align="center">
-                        {displayWastage}
-                      </TableCell>{" "}
-           
-                      <TableCell align="center">
+                        {balanceOwedByText ?? "-"}
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{ color: balanceColor, fontWeight: "bold" ,fontSize:"1.1rem"}}
+                      >
                         {displayBalanceAmount}
                       </TableCell>
                       <TableCell align="center">
@@ -317,8 +325,3 @@ const GoldsmithDetails = () => {
 };
 
 export default GoldsmithDetails;
-
-
-
-
-

@@ -349,7 +349,38 @@ const deleteAssignment = async (req, res) => {
     }
   }
 };
+const getArtisanLastBalance = async (req, res) => {
+  const { artisanId } = req.params;
 
+  try {
+    const lastAssignment = await prisma.workAssignment.findFirst({
+      where: {
+        artisanId: parseInt(artisanId),
+      },
+      orderBy: {
+        createdAt: "desc", 
+      },
+      select: {
+        balanceAmount: true,
+        balanceDirection: true,
+      },
+    });
+
+    if (!lastAssignment) {
+      return res
+        .status(200)
+        .json({ balanceAmount: 0.0, balanceDirection: "Goldsmith" }); 
+    }
+
+    res.status(200).json({
+      balanceAmount: lastAssignment.balanceAmount,
+      balanceDirection: lastAssignment.balanceDirection,
+    });
+  } catch (err) {
+    console.error("Error fetching goldsmith last balance:", err);
+    res.status(500).json({ error: "Failed to fetch goldsmith last balance" });
+  }
+};
 module.exports = {
   createAssignment,
   updateAssignment,
@@ -357,4 +388,5 @@ module.exports = {
   getAssignmentById,
   getAssignmentsByArtisan,
   deleteAssignment,
+  getArtisanLastBalance,
 };

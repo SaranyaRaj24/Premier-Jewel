@@ -363,19 +363,14 @@
 }
 
 .balance-text-owner {
-  color: #dc3545; /* Red for owner gives balance */
+  color: #d32f2f;
   font-weight: bold;
-  text-align: center;
-  margin-top: 20px;
 }
 
-.balance-text-goldsmith {
-  color: #28a745; /* Green for goldsmith gives balance */
+.balance-text-artisan {
+  color: #388e3c;
   font-weight: bold;
-  text-align: center;
-  margin-top: 20px;
 }
-
 .balance-amount {
   font-size: 1.2rem;
 }

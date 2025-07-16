@@ -7,6 +7,7 @@ const {
   getAssignmentById,
   getAssignmentsByArtisan,
   deleteAssignment,
+  getArtisanLastBalance,
 } = require("../Controllers/assignment.controller");
 
 router.post("/", createAssignment);
@@ -15,6 +16,6 @@ router.get("/", getAllAssignments);
 router.get("/:id", getAssignmentById);
 router.get("/artisan/:artisanId", getAssignmentsByArtisan);
 router.delete("/:id", deleteAssignment);
-
+router.get("/artisans/:artisanId/last-balance", getArtisanLastBalance);
 
 module.exports = router;
