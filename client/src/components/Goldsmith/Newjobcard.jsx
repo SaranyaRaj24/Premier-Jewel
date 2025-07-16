@@ -30,12 +30,13 @@ const NewJobCard = ({
   ]);
   const [itemRows, setItemRows] = useState([
     { id: null, weight: "", name: "" },
-  ]); 
+  ]);
   const [deductionRows, setDeductionRows] = useState([
-    { id: null, type: "Stone", customType: "", weight: "" }, 
+    { id: null, type: "Stone", customType: "", weight: "" },
   ]);
 
-  const fixedOpeningBalance = 10.0;
+  const [openingBalance, setOpeningBalance] = useState(0.0);
+
   const [netWeight, setNetWeight] = useState("0.000");
   const [touch, setTouch] = useState("");
   const [percentageSymbol, setPercentageSymbol] = useState("Touch");
@@ -86,14 +87,60 @@ const NewJobCard = ({
   }, []);
 
   useEffect(() => {
+    const fetchGoldsmithLastBalance = async () => {
+      if (!artisanId) return;
+
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(
+          `${BACKEND_SERVER_URL}/api/assignments/artisans/${artisanId}/last-balance`
+        ); 
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log(
+              "No previous job card found for this artisan. Setting opening balance to 0."
+            );
+            setOpeningBalance(0.0);
+          } else {
+            const errorText = await response.text();
+            throw new Error(
+              `Failed to fetch last balance: ${response.status} ${response.statusText} - ${errorText}`
+            );
+          }
+        } else {
+          const data = await response.json();
+          let lastBalance = parseFloat(data.balanceAmount || 0);
+          if (data.balanceDirection === "Goldsmith") {
+            lastBalance = lastBalance;
+          }else{
+            lastBalance = -lastBalance
+          }
+          setOpeningBalance(lastBalance);
+        }
+      } catch (err) {
+        console.error("Error fetching goldsmith's last balance:", err);
+        setError(`Failed to load opening balance: ${err.message}`);
+        setOpeningBalance(0.0); 
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (!initialData && artisanId) {
+      fetchGoldsmithLastBalance();
+    }
+  }, [artisanId, initialData]); 
+
+  useEffect(() => {
     if (initialData) {
-      console.log("Initial Data received:", initialData);
+      console.log("Initial Data Received:", initialData);
       setAssignmentId(initialData.id || null);
       setDescription(initialData.description || "");
       setGoldRows(
         initialData.metalInputs && initialData.metalInputs.length > 0
           ? initialData.metalInputs.map((input) => ({
-              id: input.id, 
+              id: input.id,
               weight: input.weight !== undefined ? String(input.weight) : "",
               touch: input.touch !== undefined ? String(input.touch) : "",
               purity: input.purity !== undefined ? String(input.purity) : "",
@@ -103,7 +150,7 @@ const NewJobCard = ({
       setItemRows(
         initialData.finishedProducts && initialData.finishedProducts.length > 0
           ? initialData.finishedProducts.map((product) => ({
-              id: product.id, 
+              id: product.id,
               weight:
                 product.weight !== undefined ? String(product.weight) : "",
               name: product.itemType || "",
@@ -113,7 +160,7 @@ const NewJobCard = ({
       setDeductionRows(
         initialData.materialLosses && initialData.materialLosses.length > 0
           ? initialData.materialLosses.map((loss) => ({
-              id: loss.id, 
+              id: loss.id,
               type: loss.type || "Stone",
               customType: loss.customType || "",
               weight: loss.weight !== undefined ? String(loss.weight) : "",
@@ -135,6 +182,12 @@ const NewJobCard = ({
       } else {
         setDisplayDate(new Date().toLocaleDateString("en-IN"));
       }
+
+      setOpeningBalance(
+        initialData.openingBalance !== undefined
+          ? parseFloat(initialData.openingBalance)
+          : 0.0
+      );
     } else {
       setAssignmentId(null);
       setDescription("");
@@ -180,7 +233,9 @@ const NewJobCard = ({
     (sum, row) => sum + parseFloat(row.purity || 0),
     0
   );
-  const totalBalance = parseFloat(fixedOpeningBalance) + totalPurity;
+
+  const totalBalance = openingBalance + totalPurity;
+
   const totalItemWeight = itemRows.reduce(
     (sum, item) => sum + parseFloat(item.weight || 0),
     0
@@ -240,7 +295,7 @@ const NewJobCard = ({
         title: `Job for ${goldsmithName} - ${displayDate}`,
         description,
         artisanId,
-        openingBalance: parseFloat(fixedOpeningBalance),
+        openingBalance: parseFloat(format(openingBalance)), 
         totalInputPurity: parseFloat(format(totalPurity)),
         totalBalance: parseFloat(format(totalBalance)),
         metalInputs: goldRows.map((row) => ({
@@ -317,11 +372,11 @@ const NewJobCard = ({
         itemTouch: parseFloat(touch || 0),
         adjustmentType: percentageSymbol,
         finalPurity: parseFloat(finalPurityForBalance),
-        balanceDirection: ownerGivesBalance ? "Owner" : "Artisan",
+        balanceDirection: ownerGivesBalance ? "Owner" : "Goldsmith",
         balanceAmount: parseFloat(balanceDifference),
         wastage: parseFloat(wastage || 0),
         finishedProducts: itemRows.map((item) => ({
-          id: item.id, 
+          id: item.id,
           weight: parseFloat(item.weight || 0),
           itemType: item.name,
         })),
@@ -332,11 +387,14 @@ const NewJobCard = ({
           weight: parseFloat(deduction.weight || 0),
         })),
         metalInputs: goldRows.map((row) => ({
-          id: row.id, 
+          id: row.id,
           weight: parseFloat(row.weight || 0),
           touch: parseFloat(row.touch || 0),
           purity: parseFloat(row.purity || 0),
         })),
+        openingBalance: parseFloat(format(openingBalance)),
+        totalInputPurity: parseFloat(format(totalPurity)),
+        totalBalance: parseFloat(format(totalBalance)),
       };
 
       console.log("Payload for update assignment:", payload);
@@ -452,8 +510,8 @@ const NewJobCard = ({
               <h3 className="section-title">Gold Calculation</h3>
               {goldRows.map((row, i) => (
                 <div key={row.id || `gold-${i}`} className="row">
-                  {" "}
-           
+                  {/* */}
+
                   <input
                     type="number"
                     placeholder="Weight"
@@ -489,7 +547,7 @@ const NewJobCard = ({
                 onClick={() =>
                   setGoldRows([
                     ...goldRows,
-                    { id: null, weight: "", touch: "", purity: "" }, 
+                    { id: null, weight: "", touch: "", purity: "" },
                   ])
                 }
                 className="circle-button"
@@ -511,7 +569,7 @@ const NewJobCard = ({
                 <div className="balance-display-row">
                   <span className="balance-label">Opening Balance:</span>
                   <span className="balance-value">
-                    {format(fixedOpeningBalance)}
+                    {format(openingBalance)}
                   </span>
                 </div>
                 <div className="balance-display-row">
@@ -536,8 +594,8 @@ const NewJobCard = ({
               <h3 className="section-title">Item Delivery</h3>
               {itemRows.map((item, i) => (
                 <div key={item.id || `item-${i}`} className="row">
-                  {" "}
-             
+                  {/* */}
+
                   <input
                     type="number"
                     placeholder="Item Weight"
@@ -567,12 +625,8 @@ const NewJobCard = ({
                 </div>
               ))}
               <button
-                onClick={
-                  () =>
-                    setItemRows([
-                      ...itemRows,
-                      { id: null, weight: "", name: "" },
-                    ]) 
+                onClick={() =>
+                  setItemRows([...itemRows, { id: null, weight: "", name: "" }])
                 }
                 className="circle-button"
                 disabled={isLoading || !isItemDeliveryEnabled}
@@ -593,8 +647,8 @@ const NewJobCard = ({
                     key={deduction.id || `deduction-${i}`}
                     className="deduction-row"
                   >
-                    {" "}
              
+
                     <select
                       value={deduction.type}
                       onChange={(e) =>
@@ -637,7 +691,7 @@ const NewJobCard = ({
                   onClick={() =>
                     setDeductionRows([
                       ...deductionRows,
-                      { id: null, type: "Stone", customType: "", weight: "" }, 
+                      { id: null, type: "Stone", customType: "", weight: "" },
                     ])
                   }
                   className="circle-button"
@@ -712,7 +766,7 @@ const NewJobCard = ({
                     </span>
                   </p>
                 ) : (
-                  <p className="balance-text-goldsmith">
+                  <p className="balance-text-artisan">
                     Goldsmith should give balance:
                     <span className="balance-amount">
                       {format(balanceDifference)}
@@ -764,25 +818,4 @@ const NewJobCard = ({
 };
 
 export default NewJobCard;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
