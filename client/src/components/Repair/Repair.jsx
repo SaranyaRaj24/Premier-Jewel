@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import "./Repair.css";
 import {
   Dialog,
@@ -15,6 +16,7 @@ import {
   FormControl,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Repair = () => {
   const [open, setOpen] = useState(false);
@@ -26,6 +28,7 @@ const Repair = () => {
   const [wastageType, setWastageType] = useState("");
   const [multiInput1, setMultiInput1] = useState("");
   const [multiInput2, setMultiInput2] = useState("");
+  const [goldsmith, setGoldsmith] = useState([]);
 
   const total = (arr) => arr.reduce((acc, val) => acc + Number(val || 0), 0);
   const totalGiven = total(givenWeights);
@@ -33,6 +36,19 @@ const Repair = () => {
   const difference = totalGiven - totalItem;
 
   const handleAddField = (setFunc, arr) => setFunc([...arr, 0]);
+
+  useEffect(() => {
+    const fetchGoldsmiths = async () => {
+      try {
+        const response = await fetch(`${BACKEND_SERVER_URL}/api/goldsmith`);
+        const data = await response.json();
+        setGoldsmith(data);
+      } catch (error) {
+        console.error("Error fetching goldsmith data:", error);
+      }
+    };
+    fetchGoldsmiths();
+  }, []);
 
   return (
     <div className="repair-container">
@@ -55,10 +71,14 @@ const Repair = () => {
               onChange={(e) => setSelectedName(e.target.value)}
               label="Name"
             >
-              <MenuItem value="Customer 1">Customer 1</MenuItem>
-              <MenuItem value="Customer 2">Customer 2</MenuItem>
+              {goldsmith.map((smith) => (
+                <MenuItem key={smith.id} value={smith.name}>
+                  {smith.name}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
+
           <div className="weight-section">
             <div className="section-header">
               <strong>Given Weight</strong>
@@ -87,6 +107,7 @@ const Repair = () => {
               <strong>Total Given Weight:</strong> {totalGiven}
             </p>
           </div>
+
           <div className="weight-section">
             <div className="section-header">
               <strong>Item Weight</strong>
@@ -115,9 +136,11 @@ const Repair = () => {
               <strong>Total Item Weight:</strong> {totalItem}
             </p>
           </div>
+
           <p>
             <strong>Difference:</strong> {difference}
           </p>
+
           <FormControlLabel
             control={
               <Checkbox

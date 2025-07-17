@@ -147,7 +147,7 @@ const OrderReport = () => {
         <TextField
           variant="outlined"
           size="small"
-          placeholder="Search orders..."
+          placeholder="Search orders by customer name..."
           InputProps={{ startAdornment: <Search color="action" /> }}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{ flex: 1, maxWidth: 400 }}

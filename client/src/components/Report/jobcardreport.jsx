@@ -1,491 +1,219 @@
 
-// import React, { useState, useEffect } from "react";
-// import axios from "axios";
-// import { BACKEND_SERVER_URL } from "../../Config/Config";
-// import "./jobcardreport.css";
-
-// const JobcardReport = () => {
-//   const [allJobCards, setAllJobCards] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-//   const [expandedCards, setExpandedCards] = useState({});
-
-//   const [searchGoldsmith, setSearchGoldsmith] = useState("");
-//   const [fromDate, setFromDate] = useState("");
-//   const [toDate, setToDate] = useState("");
-
-//   useEffect(() => {
-//     const fetchAllJobCardsData = async () => {
-//       try {
-//         const response = await axios.get(
-//           `${BACKEND_SERVER_URL}/api/job-cards/job-cards`
-//         );
-//         setAllJobCards(response.data);
-//       } catch (err) {
-//         console.error("Failed to fetch all job card data:", err);
-//         setError("Failed to load all job card reports. Please try again.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchAllJobCardsData();
-//   }, []);
-
-//   const calculatePurityWeight = (weight, touch) => {
-//     const givenWeight = parseFloat(weight) || 0;
-//     const touchValue = parseFloat(touch) || 0;
-//     return (givenWeight * touchValue) / 100;
-//   };
-
-//   const calculateJobCardTotals = (jobCard) => {
-//     let totalGivenWeight = 0;
-//     let totalFinalWeight = 0;
-//     let totalWastage = 0;
-//     let totalStone = 0;
-//     let totalEnamel = 0;
-//     let totalBeads = 0;
-
-//     jobCard.items.forEach((item) => {
-//       totalGivenWeight += calculatePurityWeight(
-//         item.originalGivenWeight,
-//         item.touch
-//       );
-//       totalFinalWeight += parseFloat(item.finalWeight || 0);
-//       totalWastage += parseFloat(item.wastage || 0);
-
-//       const stoneWeight =
-//         item.additionalWeights?.find((aw) => aw.name === "stone")?.weight || 0;
-//       const enamelWeight =
-//         item.additionalWeights?.find((aw) => aw.name === "enamel")?.weight || 0;
-//       const beadsWeight =
-//         item.additionalWeights?.find((aw) => aw.name === "beeds")?.weight || 0;
-
-//       totalStone += parseFloat(stoneWeight);
-//       totalEnamel += parseFloat(enamelWeight);
-//       totalBeads += parseFloat(beadsWeight);
-//     });
-
-//     const balance = totalGivenWeight - (totalFinalWeight + totalWastage);
-
-//     return {
-//       totalGivenWeight: totalGivenWeight.toFixed(2),
-//       totalFinalWeight: totalFinalWeight.toFixed(2),
-//       totalWastage: totalWastage.toFixed(2),
-//       totalStone: totalStone.toFixed(2),
-//       totalEnamel: totalEnamel.toFixed(2),
-//       totalBeads: totalBeads.toFixed(2),
-//       balance: balance.toFixed(2),
-//       balanceColor: balance > 0 ? "green" : balance < 0 ? "red" : "blue",
-//     };
-//   };
-
-//   const toggleExpandCard = (jobCardId) => {
-//     setExpandedCards((prev) => ({
-//       ...prev,
-//       [jobCardId]: !prev[jobCardId],
-//     }));
-//   };
-
-//   if (loading)
-//     return <p className="loading-message">Loading all job card reports...</p>;
-//   if (error) return <p className="error-message">Error: {error}</p>;
-//   if (allJobCards.length === 0)
-//     return <p className="no-data-message">No job cards found.</p>;
-
-//   const filteredJobCards = allJobCards.filter((jobCard) => {
-//     const nameMatch = jobCard.goldsmith?.name
-//       ?.toLowerCase()
-//       .includes(searchGoldsmith.toLowerCase());
-//     const jobCardDate = new Date(jobCard.date);
-//     const from = fromDate ? new Date(fromDate) : null;
-//     const to = toDate ? new Date(toDate) : null;
-
-//     const dateMatch =
-//       (!from || jobCardDate >= from) && (!to || jobCardDate <= to);
-
-//     return nameMatch && dateMatch;
-//   });
-
-//   return (
-//     <div className="jobcard-report-container">
-//       <h2 className="report-title">Job Card Reports</h2>
-
-//       <div className="legend">
-//         <strong>Legend:</strong>{" "}
-//         <span style={{ color: "green" }}>
-//           Green = Goldsmith should give balance to Owner
-//         </span>
-//         ,{" "}
-//         <span style={{ color: "red" }}>
-//           Red = Owner should give balance to Goldsmith
-//         </span>
-//       </div>
-
-//       <div className="filters">
-//         <input
-//           type="text"
-//           placeholder="Search by Goldsmith Name"
-//           value={searchGoldsmith}
-//           onChange={(e) => setSearchGoldsmith(e.target.value)}
-//           className="filter-input"
-//         />
-//         <input
-//           type="date"
-//           value={fromDate}
-//           onChange={(e) => setFromDate(e.target.value)}
-//           className="filter-input"
-//         />
-//         <input
-//           type="date"
-//           value={toDate}
-//           onChange={(e) => setToDate(e.target.value)}
-//           className="filter-input"
-//         />
-//       </div>
-
-//       <div className="table-responsive">
-//         <table className="jobcard-report-table">
-//           <thead>
-//             <tr>
-//               <th></th>
-//               <th>SI.No</th>
-//               <th>Date</th>
-//               <th>Goldsmith Name</th>
-//               <th>Items Count</th>
-//               <th>Total Given Weight</th>
-//               <th>Total Final Weight</th>
-//               <th>Total Stone</th>
-//               <th>Total Enamel</th>
-//               <th>Total Beads</th>
-//               <th>Total Wastage</th>
-//               <th>Balance</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {filteredJobCards.map((jobCard, index) => {
-//               const totals = calculateJobCardTotals(jobCard);
-//               const isExpanded = expandedCards[jobCard.id];
-
-//               return (
-//                 <React.Fragment key={jobCard.id}>
-//                   <tr className="jobcard-main-row">
-//                     <td>
-//                       <button
-//                         className="expand-btn"
-//                         onClick={() => toggleExpandCard(jobCard.id)}
-//                       >
-//                         {isExpanded ? "▼" : "►"}
-//                       </button>
-//                     </td>
-//                     <td>{index + 1}</td>
-//                     <td>
-//                       {new Date(jobCard.date).toISOString().split("T")[0]}
-//                     </td>
-//                     <td>{jobCard.goldsmith?.name || "N/A"}</td>
-//                     <td>{jobCard.items.length} items</td>
-//                     <td>{totals.totalGivenWeight} g</td>
-//                     <td>{totals.totalFinalWeight} g</td>
-//                     <td>{totals.totalStone} g</td>
-//                     <td>{totals.totalEnamel} g</td>
-//                     <td>{totals.totalBeads} g</td>
-//                     <td>{totals.totalWastage} g</td>
-//                     <td
-//                       style={{ color: totals.balanceColor, fontWeight: "bold" }}
-//                     >
-//                       {totals.balance} g
-//                     </td>
-//                   </tr>
-
-//                   {isExpanded &&
-//                     jobCard.items.map((item, itemIndex) => {
-//                       const givenPurityWeight = calculatePurityWeight(
-//                         item.originalGivenWeight,
-//                         item.touch
-//                       );
-//                       const finalWeight = parseFloat(item.finalWeight || 0);
-//                       const wastage = parseFloat(item.wastage || 0);
-//                       const balance =
-//                         givenPurityWeight - (finalWeight + wastage);
-
-//                       const stoneWeight =
-//                         item.additionalWeights?.find(
-//                           (aw) => aw.name === "stone"
-//                         )?.weight || 0;
-//                       const enamelWeight =
-//                         item.additionalWeights?.find(
-//                           (aw) => aw.name === "enamel"
-//                         )?.weight || 0;
-//                       const beadsWeight =
-//                         item.additionalWeights?.find(
-//                           (aw) => aw.name === "beeds"
-//                         )?.weight || 0;
-
-//                       return (
-//                         <tr
-//                           key={`${jobCard.id}-${item.id || itemIndex}`}
-//                           className="item-detail-row"
-//                         >
-//                           <td></td>
-//                           <td>
-//                             {index + 1}.{itemIndex + 1}
-//                           </td>
-//                           <td colSpan="2">
-//                             {item.masterItem?.itemName || "N/A"}
-//                           </td>
-//                           <td>{item.originalGivenWeight} g</td>
-//                           <td>{item.touch}</td>
-//                           <td>{givenPurityWeight.toFixed(2)} g</td>
-//                           <td>{finalWeight.toFixed(2)} g</td>
-//                           <td>{stoneWeight} g</td>
-//                           <td>{enamelWeight} g</td>
-//                           <td>{beadsWeight} g</td>
-//                           <td>{wastage.toFixed(2)} g</td>
-//                           <td
-//                             style={{
-//                               color:
-//                                 balance > 0
-//                                   ? "green"
-//                                   : balance < 0
-//                                   ? "red"
-//                                   : "blue",
-//                               fontWeight: "bold",
-//                             }}
-//                           >
-//                             {balance.toFixed(2)} g
-//                           </td>
-//                           <td></td>
-//                         </tr>
-//                       );
-//                     })}
-//                 </React.Fragment>
-//               );
-//             })}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default JobcardReport;
-
-
-
-
-
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-// import { BACKEND_SERVER_URL } from "../../Config/Config";
-import "./jobcardreport.css";
+import {
+  Box,
+  Button,
+  MenuItem,
+  Paper,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { BACKEND_SERVER_URL } from "../../Config/Config";
 
-const JobcardReport = () => {
-  const [allJobCards, setAllJobCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [searchGoldsmith, setSearchGoldsmith] = useState("");
+const JobCardReport = () => {
+  const [assignments, setAssignments] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [selectedArtisan, setSelectedArtisan] = useState("All");
+
+  const getData = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_SERVER_URL}/api/assignments`);
+      setAssignments(res.data);
+      setFiltered(res.data);
+    } catch (err) {
+      console.error("Error fetching assignments:", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchAllJobCardsData = async () => {
-      try {
-        const response = await axios.get(
-          `${BACKEND_SERVER_URL}/api/job-cards/job-cards`
-        );
-        setAllJobCards(response.data);
-      } catch (err) {
-        console.error("Failed to fetch all job card data:", err);
-        setError("Failed to load all job card reports. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllJobCardsData();
+    getData();
   }, []);
 
-  const calculatePurityWeight = (weight, touch) => {
-    const givenWeight = parseFloat(weight) || 0;
-    const touchValue = parseFloat(touch) || 0;
-    return (givenWeight * touchValue) / 100;
+  const handleFilter = () => {
+    let result = assignments;
+
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      result = result.filter((d) => {
+        const date = new Date(d.date);
+        return date >= from && date <= to;
+      });
+    }
+
+    if (selectedArtisan !== "All") {
+      result = result.filter((d) => d.artisan?.name === selectedArtisan);
+    }
+
+    setFiltered(result);
   };
 
-  const calculateJobCardTotals = (jobCard) => {
-    let totalGivenWeight = 0;
-    let totalFinalWeight = 0;
-    let totalWastage = 0;
-    let totalStone = 0;
-    let totalEnamel = 0;
-    let totalBeads = 0;
-
-    jobCard.items.forEach((item) => {
-      totalGivenWeight += calculatePurityWeight(
-        item.originalGivenWeight,
-        item.touch
-      );
-      totalFinalWeight += parseFloat(item.finalWeight || 0);
-      totalWastage += parseFloat(item.wastage || 0);
-
-      const stoneWeight =
-        item.additionalWeights?.find((aw) => aw.name === "stone")?.weight || 0;
-      const enamelWeight =
-        item.additionalWeights?.find((aw) => aw.name === "enamel")?.weight || 0;
-      const beadsWeight =
-        item.additionalWeights?.find((aw) => aw.name === "beeds")?.weight || 0;
-
-      totalStone += parseFloat(stoneWeight);
-      totalEnamel += parseFloat(enamelWeight);
-      totalBeads += parseFloat(beadsWeight);
-    });
-
-    const balance = totalGivenWeight - (totalFinalWeight + totalWastage);
-
-    return {
-      totalGivenWeight: totalGivenWeight.toFixed(2),
-      totalFinalWeight: totalFinalWeight.toFixed(2),
-      totalWastage: totalWastage.toFixed(2),
-      totalStone: totalStone.toFixed(2),
-      totalEnamel: totalEnamel.toFixed(2),
-      totalBeads: totalBeads.toFixed(2),
-      balance: balance.toFixed(2),
-      balanceColor: balance > 0 ? "green" : balance < 0 ? "red" : "blue",
-    };
+  const resetFilters = () => {
+    setFromDate("");
+    setToDate("");
+    setSelectedArtisan("All");
+    setFiltered(assignments);
   };
 
-  if (loading)
-    return <p className="loading-message">Loading all job card reports...</p>;
-  if (error) return <p className="error-message">Error: {error}</p>;
-  if (allJobCards.length === 0)
-    return <p className="no-data-message">No job cards found.</p>;
+  const artisans = [...new Set(assignments.map((a) => a.artisan?.name))];
 
-  const filteredJobCards = allJobCards.filter((jobCard) => {
-    const nameMatch = jobCard.goldsmith?.name
-      ?.toLowerCase()
-      .includes(searchGoldsmith.toLowerCase());
-    const jobCardDate = new Date(jobCard.date);
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
+  const totalPurity = filtered.reduce(
+    (acc, d) => acc + (d.finalPurity || 0),
+    0
+  );
+  const totalBalance = filtered.reduce(
+    (acc, d) => acc + (d.balanceAmount || 0),
+    0
+  );
 
-    const dateMatch =
-      (!from || jobCardDate >= from) && (!to || jobCardDate <= to);
-
-    return nameMatch && dateMatch;
-  });
-  let totalGivenWeight = 0;
-  let totalFinalWeight = 0;
-  let totalWastage = 0;
-  let totalStone = 0;
-  let totalEnamel = 0;
-  let totalBeads = 0;
-  let totalBalance = 0;
-
-  filteredJobCards.forEach((jobCard) => {
-    const totals = calculateJobCardTotals(jobCard);
-    totalGivenWeight += parseFloat(totals.totalGivenWeight);
-    totalFinalWeight += parseFloat(totals.totalFinalWeight);
-    totalWastage += parseFloat(totals.totalWastage);
-    totalStone += parseFloat(totals.totalStone);
-    totalEnamel += parseFloat(totals.totalEnamel);
-    totalBeads += parseFloat(totals.totalBeads);
-    totalBalance += parseFloat(totals.balance);
-  });
-  
   return (
-    <div className="jobcard-report-container">
-      <h2 className="report-title">Job Card Reports</h2>
-
-      <div className="legend">
-        <strong>Legend:</strong>{" "}
-        <span style={{ color: "green" }}>
-          Green = Goldsmith should give balance to Owner
-        </span>
-        ,{" "}
-        <span style={{ color: "red" }}>
-          Red = Owner should give balance to Goldsmith
-        </span>
-      </div>
-
-      <div className="filters">
-        <input
-          type="text"
-          placeholder="Search by Goldsmith Name"
-          value={searchGoldsmith}
-          onChange={(e) => setSearchGoldsmith(e.target.value)}
-          className="filter-input"
-        />
-        <input
+    <Paper sx={{ p: 3, m: 2 }}>
+      <Typography
+        variant="h5"
+        component="h1"
+        sx={{ textAlign: "center", fontWeight: 600 }}
+      >
+        Jobcard Report
+      </Typography>
+      <br></br>
+      <br></br>
+      <Box display="flex" gap={2} mb={3} flexWrap="wrap" alignItems="center">
+        <TextField
+          label="From Date"
           type="date"
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
-          className="filter-input"
+          InputLabelProps={{ shrink: true }}
         />
-        <input
+        <TextField
+          label="To Date"
           type="date"
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
-          className="filter-input"
+          InputLabelProps={{ shrink: true }}
         />
-      </div>
+        <Select
+          value={selectedArtisan}
+          onChange={(e) => setSelectedArtisan(e.target.value)}
+          displayEmpty
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="All">All</MenuItem>
+          {artisans.map((name, idx) => (
+            <MenuItem key={idx} value={name}>
+              {name}
+            </MenuItem>
+          ))}
+        </Select>
+        <Button variant="contained" onClick={handleFilter}>
+          Apply
+        </Button>
+        <Button variant="outlined" color="secondary" onClick={resetFilters}>
+          Reset
+        </Button>
+      </Box>
 
-      <div className="table-responsive">
-        <table className="jobcard-report-table">
-          <thead>
-            <tr>
-              <th>SI.No</th>
-              <th>Date</th>
-              <th>Name</th>
-              <th>Given Weight</th>
-              <th>Final Weight</th>
-              <th>Stone</th>
-              <th>Enamel</th>
-              <th>Beads</th>
-              <th>Wastage</th>
-              <th>Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredJobCards.map((jobCard, index) => {
-              const totals = calculateJobCardTotals(jobCard);
-
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead
+            sx={{
+              backgroundColor: "#e3f2fd",
+              "& th": {
+                backgroundColor: "#e3f2fd",
+                color: "#0d47a1",
+                fontWeight: "bold",
+                fontSize: "1rem",
+              },
+            }}
+          >
+            <TableRow>
+              <TableCell>SI.NO</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Goldsmith</TableCell>
+              <TableCell>Purity</TableCell>
+              <TableCell>OB</TableCell>
+              <TableCell>TB</TableCell>
+              <TableCell>Item Name</TableCell>
+              <TableCell>Item Weight</TableCell>
+              <TableCell>Wastage</TableCell>
+              <TableCell>Balance Owed By</TableCell>
+              <TableCell>Balance</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filtered.map((d, i) => {
+              const product = d.finishedProducts?.[0] || {};
               return (
-                <tr key={jobCard.id} className="jobcard-main-row">
-                  <td>{index + 1}</td>
-                  <td>{new Date(jobCard.date).toISOString().split("T")[0]}</td>
-                  <td>{jobCard.goldsmith?.name || "N/A"}</td>
-                  <td>{totals.totalGivenWeight} g</td>
-                  <td>{totals.totalFinalWeight} g</td>
-                  <td>{totals.totalStone} g</td>
-                  <td>{totals.totalEnamel} g</td>
-                  <td>{totals.totalBeads} g</td>
-                  <td>{totals.totalWastage} g</td>
-                  <td
-                    style={{ color: totals.balanceColor, fontWeight: "bold" }}
-                  >
-                    {totals.balance} g
-                  </td>
-                </tr>
+                <TableRow key={d._id || i}>
+                  <TableCell>{i + 1}</TableCell>
+                  <TableCell>
+                    {new Date(d.date).toLocaleDateString("en-IN")}
+                  </TableCell>
+                  <TableCell>{d.artisan?.name || "-"}</TableCell>
+                  <TableCell>
+                    {d.finalPurity != null ? d.finalPurity.toFixed(3) : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {d.openingBalance != null
+                      ? d.openingBalance.toFixed(3)
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {d.totalBalance != null ? d.totalBalance.toFixed(3) : "-"}
+                  </TableCell>
+                  <TableCell>{product.itemType || "-"}</TableCell>
+                  <TableCell>
+                    {product.weight != null ? product.weight.toFixed(3) : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {d.wastage != null ? d.wastage.toFixed(3) : "-"}
+                  </TableCell>
+           
+                  <TableCell>
+                    {d.balanceDirection?.trim().toLowerCase() === "artisan"
+                      ? "Goldsmith"
+                      : d.balanceDirection || "-"}
+                  </TableCell>
+
+                  <TableCell>
+                    {d.balanceAmount != null ? d.balanceAmount.toFixed(3) : "-"}
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-          <tfoot>
-            <tr style={{ fontWeight: "bold", backgroundColor: "#f2f2f2" }}>
-              <td colSpan={3}>TOTAL</td>
-              <td>{totalGivenWeight.toFixed(2)} g</td>
-              <td>{totalFinalWeight.toFixed(2)} g</td>
-              <td>{totalStone.toFixed(2)} g</td>
-              <td>{totalEnamel.toFixed(2)} g</td>
-              <td>{totalBeads.toFixed(2)} g</td>
-              <td>{totalWastage.toFixed(2)} g</td>
-              <td>{totalBalance.toFixed(2)} g</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell
+                colSpan={3}
+                sx={{ fontWeight: "bold", fontSize: "1rem", color: "black" }}
+              >
+                <strong>Total</strong>
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" ,color:"black"}}>
+                <strong>{totalPurity.toFixed(3)}</strong>
+              </TableCell>
+              <TableCell colSpan={6}></TableCell>
+              <TableCell sx={{ fontWeight: "bold", fontSize: "1rem",color:"black" }}>
+                <strong>{totalBalance.toFixed(3)}</strong>
+              </TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 };
 
-export default JobcardReport;
+export default JobCardReport;

@@ -17,8 +17,6 @@ import CustomerReport from "./components/Report/customer.report";
 import Overallreport from "./components/Report/overallreport";
 import Jobcardreport from "./components/Report/jobcardreport";
 import GoldsmithDetails from "./components/Goldsmith/GoldsmithDetails";
-import Jobcarddd from "./components/Goldsmith/Jobcarddd";
-import JobcardddReport from "./components/Report/jobcardddReport";
 import ReceiptReport from "./components/Report/receiptreport";
 import Receipt from "./components/ReceiptVoucher/receiptvoucher";
 import Customerorders from "./components/Customer/Customerorders";
@@ -28,6 +26,7 @@ import StockBill from "./components/Billing/Stockbill";
 import Goldsmithcard from "./components/Goldsmith/goldsmithcard"
 import MasterBullion from "./components/Master/Masterbullion";
 import Bullion from "./components/Bullion/Bullion";
+import Repair from "./components/Repair/Repair";
 
 function App() {
   return (
@@ -84,6 +83,7 @@ function App() {
             </PageWithNavbar>
           }
         />
+        <Route path="/repair" element={<PageWithNavbar><Repair/></PageWithNavbar>}></Route>
         <Route
           path="/customerreport"
           element={
@@ -180,22 +180,7 @@ function App() {
             </PageWithNavbar>
           }
         />
-        <Route
-          path="/jobcarddd"
-          element={
-            <PageWithNavbar>
-              <Jobcarddd />
-            </PageWithNavbar>
-          }
-        />
-        <Route
-          path="/jobcardddReport"
-          element={
-            <PageWithNavbar>
-              <JobcardddReport />
-            </PageWithNavbar>
-          }
-        />
+   
         <Route path="/bullion" element={<PageWithNavbar><Bullion/></PageWithNavbar>}></Route>
 
         <Route path="/master" element={<Master />} />
