@@ -280,10 +280,10 @@ const getAllCustomerOrders = async (req, res) => {
 
 const getDueTomorrowOrders = async (req, res) => {
   try {
-    const today = new Date(); //(ref for calculating tmrw's date)
+    const today = new Date();
     const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1); //(increase the day by 1 , so tmrw)(if today june 27 means, now it is june 28)
-    tomorrow.setHours(0, 0, 0, 0); //(resets to 12 am)
+    tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
     const nextDay = new Date(tomorrow);
     nextDay.setDate(nextDay.getDate() + 1);
@@ -291,9 +291,8 @@ const getDueTomorrowOrders = async (req, res) => {
     const orders = await prisma.customer_order.findMany({
       where: {
         due_date: {
-          gte: tomorrow, //(greater than or =)
-          lt: nextDay, //(less than)
-          
+          gte: tomorrow,
+          lt: nextDay,
         },
         status: "Pending",
       },

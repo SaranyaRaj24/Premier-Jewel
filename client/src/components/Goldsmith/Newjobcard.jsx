@@ -70,7 +70,7 @@ const NewJobCard = ({
         }
 
         const data = await response.json();
-        console.log("Fetched Master Items Data:", data);
+        console.log("Fetched master items data:", data);
 
         const itemNames = data.map((item) => item.itemName);
 
@@ -100,13 +100,13 @@ const NewJobCard = ({
         if (!response.ok) {
           if (response.status === 404) {
             console.log(
-              "No previous job card found for this artisan. Setting opening balance to 0."
+              "No previous job card found for this artisan. Setting Opening Balance to 0."
             );
             setOpeningBalance(0.0);
           } else {
             const errorText = await response.text();
             throw new Error(
-              `Failed to fetch last balance: ${response.status} ${response.statusText} - ${errorText}`
+              `Failed to fetch last Balance: ${response.status} ${response.statusText} - ${errorText}`
             );
           }
         } else {
@@ -343,7 +343,7 @@ const NewJobCard = ({
 
       onSave(jobCardData);
 
-      setMessage("Initial assignment saved successfully!");
+      setMessage("Initial Assignment saved successfully!");
       toast.success("Initial assignment saved successfully!", {
         autoClose: 3000,
       });
