@@ -187,6 +187,7 @@ model customer_order {
   image String?
   due_date DateTime?
   status String @default("Pending")
+  worker_name       String?
   created_at DateTime @default(now())
   updatedAt DateTime @default(now())
   customers Customer @relation(fields: [customer_id],references: [id],onDelete: Cascade)
