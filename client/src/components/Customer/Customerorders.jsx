@@ -140,7 +140,8 @@ const CustomerOrders = () => {
       itemName: "",
       description: "",
       weight: "",
-      dueDate: new Date().toISOString().split("T")[0], 
+      dueDate: new Date().toISOString().split("T")[0],
+      workerName: "", // New field added here
       images: [],
       imagePreviews: [],
       status: "Pending",
@@ -160,6 +161,7 @@ const CustomerOrders = () => {
         description: "",
         weight: "",
         dueDate: new Date().toISOString().split("T")[0],
+        workerName: "", // Reset for new orders
         images: [],
         imagePreviews: [],
         status: "Pending",
@@ -186,6 +188,7 @@ const CustomerOrders = () => {
             weight: item.weight,
             dueDate: formatDate(item.due_date),
             status: item.status || "Pending",
+            workerName: item.worker_name || "", 
             imagePreviews:
               item.productImages?.map(
                 (img) => `${BACKEND_SERVER_URL}/uploads/${img.filename}`
@@ -245,7 +248,8 @@ const CustomerOrders = () => {
         itemName: "",
         description: "",
         weight: "",
-        dueDate: new Date().toISOString().split("T")[0], 
+        dueDate: new Date().toISOString().split("T")[0],
+        workerName: "", 
         images: [],
         imagePreviews: [],
         status: "Pending",
@@ -276,6 +280,7 @@ const CustomerOrders = () => {
       weight: item.weight,
       dueDate: formatForInput(item.dueDate),
       status: item.status || "Pending",
+      workerName: item.workerName || "", 
       imagePreviews: [...item.imagePreviews],
       existingImages: item.existingImages || [],
       images: [],
@@ -305,7 +310,8 @@ const CustomerOrders = () => {
         itemName: "",
         description: "",
         weight: "",
-        dueDate: new Date().toISOString().split("T")[0], 
+        dueDate: new Date().toISOString().split("T")[0],
+        workerName: "", 
         images: [],
         imagePreviews: [],
         status: "Pending",
@@ -332,8 +338,6 @@ const CustomerOrders = () => {
 
   const handleSave = async () => {
     try {
-      let response;
-
       if (editingOrder?.isEditingGroup) {
         const updatePromises = items.map(async (item) => {
           const formData = new FormData();
@@ -343,6 +347,7 @@ const CustomerOrders = () => {
           formData.append("weight", item.weight);
           formData.append("due_date", item.dueDate);
           formData.append("status", item.status);
+          formData.append("worker_name", item.workerName); 
           formData.append("order_group_id", editingOrder.groupId);
 
           const removedImageIds = (item.existingImages || [])
@@ -385,6 +390,7 @@ const CustomerOrders = () => {
         formData.append("description", item.description);
         formData.append("weight", item.weight);
         formData.append("due_date", item.dueDate);
+        formData.append("worker_name", item.workerName); 
 
         if (item.images?.length > 0) {
           item.images.forEach((file) => {
@@ -392,7 +398,7 @@ const CustomerOrders = () => {
           });
         }
 
-        response = await axios.post(
+        await axios.post(
           `${BACKEND_SERVER_URL}/api/customerOrder/addToGroup/${editingOrder.groupId}`,
           formData,
           {
@@ -410,6 +416,7 @@ const CustomerOrders = () => {
           formData.append("description", item.description);
           formData.append("weight", item.weight);
           formData.append("due_date", item.dueDate);
+          formData.append("worker_name", item.workerName); 
 
           if (item.images?.length > 0) {
             item.images.forEach((file) => {
@@ -418,7 +425,7 @@ const CustomerOrders = () => {
           }
         });
 
-        response = await axios.post(
+        await axios.post(
           `${BACKEND_SERVER_URL}/api/customerOrder/create`,
           formData,
           {
@@ -439,17 +446,16 @@ const CustomerOrders = () => {
     }
   };
   useEffect(() => {
-  const handleRefresh = () => {
-    fetchCustomerOrders();
-  };
+    const handleRefresh = () => {
+      fetchCustomerOrders();
+    };
 
-  window.addEventListener("refresh-customer-orders", handleRefresh);
+    window.addEventListener("refresh-customer-orders", handleRefresh);
 
-  return () => {
-    window.removeEventListener("refresh-customer-orders", handleRefresh);
-  };
-}, []);
-
+    return () => {
+      window.removeEventListener("refresh-customer-orders", handleRefresh);
+    };
+  }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -593,6 +599,8 @@ const CustomerOrders = () => {
                     <TableCell>Description</TableCell>
                     <TableCell align="center">Weight</TableCell>
                     <TableCell align="center">Due Date</TableCell>
+                    <TableCell align="center">Worker Name</TableCell>{" "}
+                    {/* New table header */}
                     <TableCell align="center">Status</TableCell>
                   </TableRow>
                 </TableHead>
@@ -648,6 +656,9 @@ const CustomerOrders = () => {
                       <TableCell align="center">{item.weight}</TableCell>
                       <TableCell align="center">
                         {item.dueDate || "N/A"}
+                      </TableCell>
+                      <TableCell align="center">
+                        {item.workerName || "N/A"} 
                       </TableCell>
                       <TableCell align="center">
                         <StatusChip
@@ -736,8 +747,16 @@ const CustomerOrders = () => {
                 size="small"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-             
-               
+              />
+              <TextField
+                label="Worker Name"
+                value={item.workerName}
+                onChange={(e) =>
+                  handleChange(index, "workerName", e.target.value)
+                }
+                size="small"
+                fullWidth
+                required 
               />
               <TextField
                 select
@@ -888,7 +907,8 @@ const CustomerOrders = () => {
                   item.itemName &&
                   item.description &&
                   item.weight &&
-                  item.dueDate
+                  item.dueDate &&
+                  item.workerName 
               )
             }
             sx={{

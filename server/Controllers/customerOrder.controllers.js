@@ -14,6 +14,7 @@ const getCustomerOrder = async (req, res) => {
         weight: true,
         due_date: true,
         status: true,
+        worker_name: true,
         order_group_id: true,
         productImages: { select: { filename: true } },
       },
@@ -47,6 +48,7 @@ const createCustomerOrder = async (req, res) => {
       description,
       weight,
       due_date,
+      worker_name, 
       order_group_id,
     } = req.body;
 
@@ -56,6 +58,9 @@ const createCustomerOrder = async (req, res) => {
       : [description];
     const weights = Array.isArray(weight) ? weight : [weight];
     const dueDates = Array.isArray(due_date) ? due_date : [due_date];
+    const workerNames = Array.isArray(worker_name)
+      ? worker_name
+      : [worker_name]; 
 
     const groupId = order_group_id
       ? parseInt(order_group_id)
@@ -72,7 +77,9 @@ const createCustomerOrder = async (req, res) => {
           description: descriptions[i],
           weight: parseFloat(weights[i]),
           due_date: dueDate,
+          worker_name: workerNames[i], 
           order_group_id: groupId,
+          status: "Pending", 
         },
       });
 
@@ -111,8 +118,15 @@ const updateCustomerOrder = async (req, res) => {
       return res.status(400).json({ error: "Invalid order ID" });
     }
 
-    const { item_name, description, weight, due_date, status, order_group_id } =
-      req.body;
+    const {
+      item_name,
+      description,
+      weight,
+      due_date,
+      status,
+      worker_name,
+      order_group_id,
+    } = req.body; 
 
     const existingOrder = await prisma.customer_order.findUnique({
       where: { id: parseInt(id) },
@@ -141,6 +155,7 @@ const updateCustomerOrder = async (req, res) => {
       dataToUpdate.due_date = parsedDate;
     }
     if (status !== undefined) dataToUpdate.status = status;
+    if (worker_name !== undefined) dataToUpdate.worker_name = worker_name;
 
     const updatedOrder = await prisma.customer_order.update({
       where: { id: parseInt(id) },
@@ -171,7 +186,14 @@ const updateCustomerOrder = async (req, res) => {
 const addExtraItemToOrderGroup = async (req, res) => {
   try {
     const { order_group_id } = req.params;
-    const { customer_id, item_name, description, weight, due_date } = req.body;
+    const {
+      customer_id,
+      item_name,
+      description,
+      weight,
+      due_date,
+      worker_name,
+    } = req.body;
 
     const dueDate = new Date(due_date);
 
@@ -182,7 +204,9 @@ const addExtraItemToOrderGroup = async (req, res) => {
         description,
         weight: parseFloat(weight),
         due_date: dueDate,
+        worker_name, 
         order_group_id: parseInt(order_group_id),
+        status: "Pending", 
       },
     });
 
@@ -243,7 +267,7 @@ const deleteImageById = async (req, res) => {
 
     const fs = require("fs");
     const path = require("path");
-    const imagePath = path.join(__dirname, "../uploads", image.filename);
+    const imagePath = path.join(__dirname, "../../uploads", image.filename);
 
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
@@ -259,10 +283,23 @@ const deleteImageById = async (req, res) => {
     return res.status(500).json({ error: "Failed to delete image" });
   }
 };
+
 const getAllCustomerOrders = async (req, res) => {
   try {
     const orders = await prisma.customer_order.findMany({
-      include: {
+      select: {
+
+        id: true,
+        item_name: true,
+        description: true,
+        weight: true,
+        due_date: true,
+        status: true,
+        worker_name: true, 
+        order_group_id: true,
+        customer_id: true,
+        created_at: true,
+        updatedAt: true, 
         productImages: { select: { filename: true } },
         customers: { select: { name: true } },
       },
@@ -296,8 +333,24 @@ const getDueTomorrowOrders = async (req, res) => {
         },
         status: "Pending",
       },
-      include: {
-        customers: true,
+      select: {
+      
+        id: true,
+        item_name: true,
+        description: true,
+        weight: true,
+        due_date: true,
+        status: true,
+        worker_name: true, 
+        order_group_id: true,
+        customer_id: true,
+        created_at: true,
+        updatedAt: true,
+        customers: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
@@ -305,7 +358,7 @@ const getDueTomorrowOrders = async (req, res) => {
       id: order.id,
       message: `${order.item_name} order due tomorrow for ${
         order.customers?.name || "Unknown Customer"
-      }`,
+      } (Worker: ${order.worker_name || "N/A"})`, 
       date: order.due_date,
       status: order.status,
     }));
@@ -324,6 +377,10 @@ const makeStatusAsDelivered = async (req, res) => {
     const existingOrder = await prisma.customer_order.findUnique({
       where: { id: parseInt(id) },
     });
+
+    if (!existingOrder) {
+      return res.status(404).json({ error: "Order item not found" });
+    }
 
     const updatedOrder = await prisma.customer_order.update({
       where: { id: parseInt(id) },

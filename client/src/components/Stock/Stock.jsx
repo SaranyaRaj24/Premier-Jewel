@@ -1,25 +1,26 @@
-
 import React, { useState, useEffect } from "react";
 import "./Stock.css";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Stock = () => {
+  const [allStockData, setAllStockData] = useState([]);
+  const [filteredStockData, setFilteredStockData] = useState([]);
   const [stockSummary, setStockSummary] = useState([
     { label: "Total Items", value: 0 },
     { label: "Total Weight", value: "0g" },
-    { label: "Total Purity", value: "0" }, 
+    { label: "Total Wastage", value: "0" },
   ]);
-  const [stockData, setStockData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+
+  const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [filterDate, setFilterDate] = useState(""); 
+  const [filterDate, setFilterDate] = useState("");
+
   useEffect(() => {
     const fetchStockData = async () => {
       try {
         const response = await fetch(`${BACKEND_SERVER_URL}/api/assignments`);
-
         if (!response.ok) {
           const errorBody = await response.text();
           try {
@@ -39,56 +40,37 @@ const Stock = () => {
         }
 
         const data = await response.json();
-        console.log("Fetched raw assignments data:", data);
+        let allProcessed = [];
 
-        let totalItems = 0;
-        let totalWeight = 0;
-        let sumOfPurities = 0;
+        data.forEach((assignment) => {
+          const wastage = assignment.wastage
+            ? parseFloat(assignment.wastage)
+            : 0;
 
-        const processedStockData = data.flatMap((assignment) => {
-          return assignment.finishedProducts.map((product) => {
-            const productWeight = parseFloat(product.weight || 0);
-            const productPurity = assignment.finalPurity
-              ? parseFloat(assignment.finalPurity)
-              : 0;
+          const createdAtDate = new Date(assignment.createdAt);
+          const rawDate = createdAtDate.toISOString().split("T")[0];
+          const displayDate = createdAtDate.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
 
-            totalItems += 1;
-            totalWeight += productWeight;
-            sumOfPurities += productPurity;
-
-            const status = "In Stock";
-            const createdAtDate = new Date(assignment.createdAt);
-            const rawDateForFiltering = createdAtDate
-              .toISOString()
-              .split("T")[0];
-
-            const indianDateFormat = createdAtDate.toLocaleDateString("en-IN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            });
-
-            return {
+          assignment.finishedProducts.forEach((product) => {
+            allProcessed.push({
               type: product.itemType || "N/A",
-              purity: productPurity ? `${productPurity.toFixed(3)}` : "N/A",
-              weight: productWeight.toFixed(3),
-              status: status,
-              rawDateIn: rawDateForFiltering, 
-              displayDateIn: indianDateFormat, 
-            };
+              weight: parseFloat(product.weight || 0),
+              wastage: wastage,
+              status: "In Stock",
+              rawDateIn: rawDate,
+              displayDateIn: displayDate,
+            });
           });
         });
 
-        setStockData(processedStockData);
-        setStockSummary([
-          { label: "Total Items", value: totalItems },
-          { label: "Total Weight", value: `${totalWeight.toFixed(3)}g` },
-          { label: "Total Purity", value: `${sumOfPurities.toFixed(3)}` },
-        ]);
+        setAllStockData(allProcessed);
+        setLoading(false);
       } catch (err) {
         setError(err.message);
-        console.error("Error fetching stock data:", err);
-      } finally {
         setLoading(false);
       }
     };
@@ -96,33 +78,31 @@ const Stock = () => {
     fetchStockData();
   }, []);
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
+  useEffect(() => {
+    const filtered = allStockData.filter((item) => {
+      const matchesType =
+        filterType === "" ||
+        item.type.toLowerCase() === filterType.toLowerCase();
+      const matchesStatus =
+        filterStatus === "" ||
+        (filterStatus === "in" && item.status === "In Stock") ||
+        (filterStatus === "sold" && item.status === "Sold");
+      const matchesDate = filterDate === "" || item.rawDateIn === filterDate;
+      return matchesType && matchesStatus && matchesDate;
+    });
 
-  const handleStatusFilterChange = (e) => {
-    setFilterStatus(e.target.value);
-  };
+    setFilteredStockData(filtered);
 
-  const handleDateFilterChange = (e) => {
-    setFilterDate(e.target.value);
-  };
+    const totalItems = filtered.length;
+    const totalWeight = filtered.reduce((sum, item) => sum + item.weight, 0);
+    const totalWastage = filtered.reduce((sum, item) => sum + item.wastage, 0);
 
-  const filteredStockData = stockData.filter((item, index) => {
-    const matchesSearch =
-      item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (index + 1).toString().includes(searchTerm);
-
-    const matchesStatus =
-      filterStatus === "" ||
-      (filterStatus === "in" && item.status === "In Stock") ||
-      (filterStatus === "sold" && item.status === "Sold");
-
- 
-    const matchesDate = filterDate === "" || item.rawDateIn === filterDate;
-
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+    setStockSummary([
+      { label: "Total Items", value: totalItems },
+      { label: "Total Weight", value: `${totalWeight.toFixed(3)}g` },
+      { label: "Total Wastage", value: `${totalWastage.toFixed(3)}` },
+    ]);
+  }, [allStockData, filterType, filterStatus, filterDate]);
 
   if (loading) {
     return <div className="stock-container">Loading stock data...</div>;
@@ -134,13 +114,14 @@ const Stock = () => {
         <h2>Error Loading Stock:</h2>
         <p>{error}</p>
         <p>
-          Please ensure the backend server is running on **`{BACKEND_SERVER_URL}
-     
+          Please ensure the backend server is running at{" "}
+          <b>{BACKEND_SERVER_URL}</b>
         </p>
-
       </div>
     );
   }
+
+  const uniqueTypes = [...new Set(allStockData.map((item) => item.type))];
 
   return (
     <div className="stock-container">
@@ -156,21 +137,31 @@ const Stock = () => {
       </div>
 
       <div className="stock-filters">
-        <input
-          type="text"
-          placeholder="Search Serial No or Type"
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-        <select value={filterStatus} onChange={handleStatusFilterChange}>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+        >
+          <option value="">All Types</option>
+          {uniqueTypes.map((type, idx) => (
+            <option key={idx} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
           <option value="">All Status</option>
           <option value="in">In Stock</option>
           <option value="sold">Sold</option>
         </select>
+
         <input
           type="date"
-          value={filterDate} 
-          onChange={handleDateFilterChange}
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
         />
       </div>
 
@@ -180,7 +171,7 @@ const Stock = () => {
             <tr>
               <th>Serial No</th>
               <th>Type</th>
-              <th>Purity</th>
+              <th>Wastage</th>
               <th>Weight (g)</th>
               <th>Status</th>
               <th>Date In</th>
@@ -192,8 +183,8 @@ const Stock = () => {
                 <tr key={index}>
                   <td>{index + 1}</td>
                   <td>{item.type}</td>
-                  <td>{item.purity}</td>
-                  <td>{item.weight}</td>
+                  <td>{item.wastage.toFixed(3)}</td>
+                  <td>{item.weight.toFixed(3)}</td>
                   <td
                     className={
                       item.status === "Sold" ? "sold-status" : "in-stock-status"
@@ -201,15 +192,12 @@ const Stock = () => {
                   >
                     {item.status}
                   </td>
-                  <td>{item.displayDateIn}</td>{" "}
-                
+                  <td>{item.displayDateIn}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6">
-               No finished products in stock.  
-                </td>
+                <td colSpan="6">No finished products in stock.</td>
               </tr>
             )}
           </tbody>
