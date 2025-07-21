@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import "./Stock.css";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
@@ -8,7 +9,8 @@ const Stock = () => {
   const [stockSummary, setStockSummary] = useState([
     { label: "Total Items", value: 0 },
     { label: "Total Weight", value: "0g" },
-    { label: "Total Wastage", value: "0" },
+    { label: "Total Wastage (Goldsmith)", value: "0g" },
+    { label: "Total Purity (Jewel Stock)", value: "0g" },
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,33 +18,41 @@ const Stock = () => {
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterDate, setFilterDate] = useState("");
+  const [filterSource, setFilterSource] = useState(""); 
 
   useEffect(() => {
-    const fetchStockData = async () => {
+    const fetchAllStockData = async () => {
       try {
-        const response = await fetch(`${BACKEND_SERVER_URL}/api/assignments`);
-        if (!response.ok) {
-          const errorBody = await response.text();
-          try {
-            const errorJson = JSON.parse(errorBody);
-            throw new Error(
-              `HTTP error! status: ${response.status}, message: ${
-                errorJson.error || "Unknown error"
-              }`
-            );
-          } catch (e) {
-            throw new Error(
-              `HTTP error! status: ${
-                response.status
-              }, received non-JSON: ${errorBody.substring(0, 100)}...`
-            );
-          }
+        setLoading(true);
+        const assignmentsResponse = await fetch(
+          `${BACKEND_SERVER_URL}/api/assignments`
+        );
+        if (!assignmentsResponse.ok) {
+          const errorBody = await assignmentsResponse.text();
+          throw new Error(
+            `HTTP error! Assignments status: ${
+              assignmentsResponse.status
+            }, message: ${errorBody.substring(0, 100)}...`
+          );
         }
+        const assignmentsData = await assignmentsResponse.json();
 
-        const data = await response.json();
-        let allProcessed = [];
+        const jewelStockResponse = await fetch(
+          `${BACKEND_SERVER_URL}/api/jewel-stock`
+        );
+        if (!jewelStockResponse.ok) {
+          const errorBody = await jewelStockResponse.text();
+          throw new Error(
+            `HTTP error! Jewel Stock status: ${
+              jewelStockResponse.status
+            }, message: ${errorBody.substring(0, 100)}...`
+          );
+        }
+        const jewelStockData = await jewelStockResponse.json();
 
-        data.forEach((assignment) => {
+        let processedStock = [];
+
+        assignmentsData.forEach((assignment) => {
           const wastage = assignment.wastage
             ? parseFloat(assignment.wastage)
             : 0;
@@ -56,18 +66,45 @@ const Stock = () => {
           });
 
           assignment.finishedProducts.forEach((product) => {
-            allProcessed.push({
+            processedStock.push({
+              id: `assign-${product._id || Math.random()}`, 
               type: product.itemType || "N/A",
               weight: parseFloat(product.weight || 0),
               wastage: wastage,
-              status: "In Stock",
+              status: "In Stock", 
               rawDateIn: rawDate,
               displayDateIn: displayDate,
+              source: "Goldsmith", 
+              purityValue: null, 
             });
           });
         });
 
-        setAllStockData(allProcessed);
+        jewelStockData.forEach((jewel) => {
+          const createdAtDate = new Date(jewel.createdAt || Date.now()); 
+          const rawDate = createdAtDate.toISOString().split("T")[0];
+          const displayDate = createdAtDate.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+
+          processedStock.push({
+            id: `jewel-${jewel._id || Math.random()}`, 
+            type: jewel.jewelName || "N/A",
+            weight: parseFloat(jewel.finalWeight || 0),
+            stoneWeight: parseFloat(jewel.stoneWeight || 0),
+            touch: parseFloat(jewel.touch || 0),
+            purityValue: parseFloat(jewel.purityValue || 0),
+            wastage: 0, 
+            status: "In Stock", 
+            rawDateIn: rawDate,
+            displayDateIn: displayDate,
+            source: "Jewel Stock", 
+          });
+        });
+
+        setAllStockData(processedStock);
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -75,34 +112,50 @@ const Stock = () => {
       }
     };
 
-    fetchStockData();
-  }, []);
+    fetchAllStockData();
+  }, []); 
 
   useEffect(() => {
     const filtered = allStockData.filter((item) => {
       const matchesType =
         filterType === "" ||
-        item.type.toLowerCase() === filterType.toLowerCase();
+        item.type.toLowerCase().includes(filterType.toLowerCase());
       const matchesStatus =
         filterStatus === "" ||
         (filterStatus === "in" && item.status === "In Stock") ||
         (filterStatus === "sold" && item.status === "Sold");
+
       const matchesDate = filterDate === "" || item.rawDateIn === filterDate;
-      return matchesType && matchesStatus && matchesDate;
+
+      const matchesSource = filterSource === "" || item.source === filterSource;
+
+      return matchesType && matchesStatus && matchesDate && matchesSource;
     });
 
     setFilteredStockData(filtered);
 
     const totalItems = filtered.length;
     const totalWeight = filtered.reduce((sum, item) => sum + item.weight, 0);
-    const totalWastage = filtered.reduce((sum, item) => sum + item.wastage, 0);
+    const totalWastage = filtered
+      .filter((item) => item.source === "Goldsmith")
+      .reduce((sum, item) => sum + item.wastage, 0);
+    const totalPurityJewelStock = filtered
+      .filter((item) => item.source === "Jewel Stock")
+      .reduce((sum, item) => sum + item.purityValue, 0);
 
     setStockSummary([
       { label: "Total Items", value: totalItems },
       { label: "Total Weight", value: `${totalWeight.toFixed(3)}g` },
-      { label: "Total Wastage", value: `${totalWastage.toFixed(3)}` },
+      {
+        label: "Total Wastage (Goldsmith)",
+        value: `${totalWastage.toFixed(3)}g`,
+      },
+      {
+        label: "Total Purity (Jewel Stock)",
+        value: `${totalPurityJewelStock.toFixed(3)}g`,
+      },
     ]);
-  }, [allStockData, filterType, filterStatus, filterDate]);
+  }, [allStockData, filterType, filterStatus, filterDate, filterSource]); 
 
   if (loading) {
     return <div className="stock-container">Loading stock data...</div>;
@@ -121,7 +174,9 @@ const Stock = () => {
     );
   }
 
-  const uniqueTypes = [...new Set(allStockData.map((item) => item.type))];
+  const uniqueTypes = [
+    ...new Set(allStockData.map((item) => item.type)),
+  ].sort();
 
   return (
     <div className="stock-container">
@@ -138,6 +193,14 @@ const Stock = () => {
 
       <div className="stock-filters">
         <select
+          value={filterSource}
+          onChange={(e) => setFilterSource(e.target.value)}
+        >
+          <option value="">All Sources</option>
+          <option value="Goldsmith">Goldsmith</option>
+          <option value="Jewel Stock">Jewel Stock</option>
+        </select>
+        <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
         >
@@ -148,14 +211,12 @@ const Stock = () => {
             </option>
           ))}
         </select>
-
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
         >
           <option value="">All Status</option>
           <option value="in">In Stock</option>
-          <option value="sold">Sold</option>
         </select>
 
         <input
@@ -170,9 +231,11 @@ const Stock = () => {
           <thead>
             <tr>
               <th>Serial No</th>
+              <th>Source</th>
               <th>Type</th>
-              <th>Wastage</th>
               <th>Weight (g)</th>
+              <th>Purity (g)</th>
+              <th>Wastage (g)</th>
               <th>Status</th>
               <th>Date In</th>
             </tr>
@@ -180,11 +243,21 @@ const Stock = () => {
           <tbody>
             {filteredStockData.length > 0 ? (
               filteredStockData.map((item, index) => (
-                <tr key={index}>
+                <tr key={item.id}>
                   <td>{index + 1}</td>
+                  <td>{item.source}</td>
                   <td>{item.type}</td>
-                  <td>{item.wastage.toFixed(3)}</td>
                   <td>{item.weight.toFixed(3)}</td>
+                  <td>
+                    {item.source === "Jewel Stock" && item.purityValue !== null
+                      ? item.purityValue.toFixed(3)
+                      : "N/A"}
+                  </td>
+                  <td>
+                    {item.source === "Goldsmith" && item.wastage !== null
+                      ? item.wastage.toFixed(3)
+                      : "N/A"}
+                  </td>
                   <td
                     className={
                       item.status === "Sold" ? "sold-status" : "in-stock-status"
@@ -197,7 +270,9 @@ const Stock = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6">No finished products in stock.</td>
+                <td colSpan="8">
+                  No stock entries found for the current filters.
+                </td>
               </tr>
             )}
           </tbody>
