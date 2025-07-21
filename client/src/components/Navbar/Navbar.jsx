@@ -127,7 +127,9 @@ const Navbar = () => {
                 // ["Overall Report", "/overallreport"],
                 ["Jobcard Report", "/jobcardReport"],
                 // ["Receipt Report", "/receiptreport"],
-                ["Order Report","/orderreport"]
+                ["Order Report","/orderreport"],
+                ["Jewelstock Report","/jewelstockreport"]
+
               ].map(([name, path]) => (
                 <a
                   key={path}

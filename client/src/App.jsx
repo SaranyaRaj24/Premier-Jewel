@@ -22,11 +22,11 @@ import Receipt from "./components/ReceiptVoucher/receiptvoucher";
 import Customerorders from "./components/Customer/Customerorders";
 import Orderreport from "./components/Report/orderreport";
 import Newjobcard from "./components/Goldsmith/Newjobcard";
-import StockBill from "./components/Billing/Stockbill";
 import Goldsmithcard from "./components/Goldsmith/goldsmithcard"
 import MasterBullion from "./components/Master/Masterbullion";
 import Bullion from "./components/Bullion/Bullion";
 import Repair from "./components/Repair/Repair";
+import Jewelstockreport from "./components/Report/jewelstockreport";
 
 function App() {
   return (
@@ -67,14 +67,7 @@ function App() {
             </PageWithNavbar>
           }
         />
-        <Route
-          path="/stockbill"
-          element={
-            <PageWithNavbar>
-              <StockBill />
-            </PageWithNavbar>
-          }
-        ></Route>
+      
         <Route
           path="/report"
           element={
@@ -83,12 +76,27 @@ function App() {
             </PageWithNavbar>
           }
         />
-        <Route path="/repair" element={<PageWithNavbar><Repair/></PageWithNavbar>}></Route>
+        <Route
+          path="/repair"
+          element={
+            <PageWithNavbar>
+              <Repair />
+            </PageWithNavbar>
+          }
+        ></Route>
         <Route
           path="/customerreport"
           element={
             <PageWithNavbar>
               <CustomerReport />
+            </PageWithNavbar>
+          }
+        />
+        <Route
+          path="/jewelstockreport"
+          element={
+            <PageWithNavbar>
+              <Jewelstockreport />
             </PageWithNavbar>
           }
         />
@@ -180,12 +188,19 @@ function App() {
             </PageWithNavbar>
           }
         />
-   
-        <Route path="/bullion" element={<PageWithNavbar><Bullion/></PageWithNavbar>}></Route>
+
+        <Route
+          path="/bullion"
+          element={
+            <PageWithNavbar>
+              <Bullion />
+            </PageWithNavbar>
+          }
+        ></Route>
 
         <Route path="/master" element={<Master />} />
         <Route path="/mastercustomer" element={<MasterCustomer />} />
-        <Route path="/masterbullion" element={<MasterBullion/>}></Route>
+        <Route path="/masterbullion" element={<MasterBullion />}></Route>
         {/* <Route path="/addcustomer" element={<AddCustomer />} /> */}
       </Routes>
     </BrowserRouter>

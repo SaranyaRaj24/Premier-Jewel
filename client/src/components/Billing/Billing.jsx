@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Autocomplete,
   TextField,
@@ -17,10 +16,11 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { MdDeleteForever } from "react-icons/md";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { BACKEND_SERVER_URL } from "../../Config/Config";
 import "./Billing.css";
 
 const Billing = () => {
-  const [customers] = useState([{ customer_id: 1, customer_name: "John Doe" }]);
+  const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [billId] = useState(1);
   const [date] = useState(new Date().toLocaleDateString("en-IN"));
@@ -142,6 +142,23 @@ const Billing = () => {
     height: "35px",
   };
 
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch(`${BACKEND_SERVER_URL}/api/customers`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setCustomers(data);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
   return (
     <Box className="billing-wrapper">
       <Box className="left-panel">
@@ -165,7 +182,7 @@ const Billing = () => {
         <Box className="search-section no-print">
           <Autocomplete
             options={customers}
-            getOptionLabel={(option) => option.customer_name || ""}
+            getOptionLabel={(option) => option.name || ""}
             onChange={(_, newValue) => setSelectedCustomer(newValue)}
             value={selectedCustomer}
             renderInput={(params) => (
@@ -184,8 +201,9 @@ const Billing = () => {
           <Box className="customer-details">
             <h3 className="no-print">Customer Details:</h3>
             <p>
-              <strong>Name:</strong> {selectedCustomer.customer_name}
+              <strong>Name:</strong> {selectedCustomer.name}{" "}      
             </p>
+         
           </Box>
         )}
 
@@ -402,7 +420,7 @@ const Billing = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="no-products-message">
-                      No received details added
+                   No received details added
                     </TableCell>
                   </TableRow>
                 )}
