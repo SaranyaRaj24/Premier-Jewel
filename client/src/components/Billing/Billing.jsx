@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Autocomplete,
@@ -45,11 +46,12 @@ const Billing = () => {
       touch: "",
       purityWeight: "",
       amount: "",
+      hallmark: "", 
     },
   ]);
 
   const [billDetailRows, setBillDetailRows] = useState([
-    { productName: "", wt: "", stWt: "", awt: "", percent: "", fwt: "" },
+    { productName: "", wt: "", stWt: "", awt: "", percent: "", fwt: "", hallmark: "" },
   ]);
 
   const handleAddRow = () => {
@@ -62,6 +64,7 @@ const Billing = () => {
         touch: "",
         purityWeight: "",
         amount: "",
+        hallmark: "", 
       },
     ]);
   };
@@ -75,7 +78,7 @@ const Billing = () => {
   const handleAddBillDetailRow = () => {
     setBillDetailRows([
       ...billDetailRows,
-      { productName: "", wt: "", stWt: "", awt: "", percent: "", fwt: "" },
+      { productName: "", wt: "", stWt: "", awt: "", percent: "", fwt: "", hallmark: "" },
     ]);
   };
 
@@ -90,6 +93,9 @@ const Billing = () => {
     const awt = wt - stWt;
     updated[index].awt = awt.toFixed(3);
     updated[index].fwt = ((awt * percent) / 100).toFixed(3);
+    if (field === "hallmark") {
+      updated[index].hallmark = value;
+    }
 
     setBillDetailRows(updated);
   };
@@ -112,6 +118,10 @@ const Billing = () => {
     }
 
     updatedRows[index].purityWeight = calculatedPurity.toFixed(3);
+    if (field === "hallmark") {
+      updatedRows[index].hallmark = value;
+    }
+
     setRows(updatedRows);
   };
 
@@ -134,6 +144,19 @@ const Billing = () => {
   const cashBalance = lastGoldRate
     ? (parseFloat(lastGoldRate) * pureBalance).toFixed(2)
     : "0.00";
+
+
+  const totalBillHallmark = billDetailRows.reduce(
+    (total, row) => total + (parseFloat(row.hallmark) || 0),
+    0
+  );
+
+  const totalReceivedHallmark = rows.reduce(
+    (total, row) => total + (parseFloat(row.hallmark) || 0),
+    0
+  );
+
+  const hallmarkBalance = totalBillHallmark - totalReceivedHallmark;
 
   const inputStyle = {
     minWidth: "130px",
@@ -201,9 +224,8 @@ const Billing = () => {
           <Box className="customer-details">
             <h3 className="no-print">Customer Details:</h3>
             <p>
-              <strong>Name:</strong> {selectedCustomer.name}{" "}      
+              <strong>Name:</strong> {selectedCustomer.name}{" "}
             </p>
-         
           </Box>
         )}
 
@@ -231,6 +253,7 @@ const Billing = () => {
                 <TableCell className="th">AWT</TableCell>
                 <TableCell className="th">%</TableCell>
                 <TableCell className="th">FWT</TableCell>
+                <TableCell className="th">Hallmark Bal</TableCell >
               </TableRow>
             </TableHead>
             <TableBody>
@@ -306,6 +329,17 @@ const Billing = () => {
                       inputProps={{ style: inputStyle }}
                     />
                   </TableCell>
+                  <TableCell className="td">
+                    <TextField
+                      size="small"
+                      type="number"
+                      value={row.hallmark}
+                      onChange={(e) =>
+                        handleBillDetailChange(index, "hallmark", e.target.value)
+                      }
+                      inputProps={{ style: inputStyle }}
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -339,6 +373,7 @@ const Billing = () => {
                   <TableCell className="th">Touch</TableCell>
                   <TableCell className="th">Purity WT</TableCell>
                   <TableCell className="th">Amount</TableCell>
+                  <TableCell className="th">Hallmark Bal</TableCell> 
                   <TableCell className="th no-print">Action</TableCell>
                 </TableRow>
               </TableHead>
@@ -410,6 +445,17 @@ const Billing = () => {
                           inputProps={{ style: inputStyle }}
                         />
                       </TableCell>
+                      <TableCell className="td">
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={row.hallmark}
+                          onChange={(e) =>
+                            handleRowChange(index, "hallmark", e.target.value)
+                          }
+                          inputProps={{ style: inputStyle }}
+                        />
+                      </TableCell>
                       <TableCell className="td no-print">
                         <IconButton onClick={() => handleDeleteRow(index)}>
                           <MdDeleteForever />
@@ -419,7 +465,7 @@ const Billing = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="no-products-message">
+                    <TableCell colSpan={9} className="no-products-message"> 
                    No received details added
                     </TableCell>
                   </TableRow>
@@ -432,6 +478,7 @@ const Billing = () => {
             <div className="flex">
               <strong>Cash Balance: {cashBalance}</strong>
               <strong>Pure Balance: {pureBalance.toFixed(3)}</strong>
+              <strong>Hallmark Balance: {hallmarkBalance.toFixed(3)}</strong> 
             </div>
           </Box>
 
@@ -446,13 +493,13 @@ const Billing = () => {
       </Box>
 
       <Box className="right-panel no-print">
-        <h3 className="heading">Available Product Weights</h3>
+        <h3 className="heading">Available Products</h3>
         <Table className="table">
           <TableHead>
             <TableRow>
               <TableCell className="th">S.No</TableCell>
               <TableCell className="th">Product</TableCell>
-              <TableCell className="th">Remaining Weight</TableCell>
+              <TableCell className="th">Remaining Weights</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
