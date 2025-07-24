@@ -141,7 +141,7 @@ const CustomerOrders = () => {
       description: "",
       weight: "",
       dueDate: new Date().toISOString().split("T")[0],
-      workerName: "", // New field added here
+      workerName: "", 
       images: [],
       imagePreviews: [],
       status: "Pending",
@@ -161,14 +161,41 @@ const CustomerOrders = () => {
         description: "",
         weight: "",
         dueDate: new Date().toISOString().split("T")[0],
-        workerName: "", // Reset for new orders
+        workerName: "", 
         images: [],
         imagePreviews: [],
         status: "Pending",
       },
     ]);
   };
+ const handleDeleteOrderItem = async (itemId) => {
+   if (!itemId) {
+     console.error("Missing item ID for delete:", itemId);
+     return;
+   }
 
+   if (!window.confirm("Are you sure you want to delete this item?")) {
+     return; 
+   }
+
+   try {
+     const res = await axios.delete(
+       `${BACKEND_SERVER_URL}/api/customerOrder/delete/${itemId}` 
+     );
+     toast.success("Order item deleted successfully!");
+     console.log(res.data.message);
+     fetchCustomerOrders(); 
+     window.dispatchEvent(new Event("refresh-notifications"));
+   } catch (error) {
+     console.error(
+       "Error deleting order item:",
+       error?.response?.data?.message || error.message
+     );
+     toast.error(
+       error?.response?.data?.message || "Failed to delete order item."
+     );
+   }
+ };
   const fetchCustomerOrders = async () => {
     try {
       const res = await axios.get(
@@ -321,20 +348,6 @@ const CustomerOrders = () => {
     setOpen(true);
   };
 
-  const handleDeleteOrder = async (groupId) => {
-    try {
-      const res = await axios.delete(
-        `${BACKEND_SERVER_URL}/api/customerOrder/delete/group/${groupId}`
-      );
-      if (res.status === 200) {
-        toast.success("Order group deleted successfully!");
-        await fetchCustomerOrders();
-      }
-    } catch (error) {
-      console.error("Error deleting order group:", error);
-      toast.error("Failed to delete order group");
-    }
-  };
 
   const handleSave = async () => {
     try {
@@ -569,14 +582,6 @@ const CustomerOrders = () => {
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title="Delete Order">
-                  <IconButton
-                    color="error"
-                    onClick={() => handleDeleteOrder(order.groupId)}
-                  >
-                    <Delete />
-                  </IconButton>
-                </Tooltip>
               </Box>
             </Box>
 
@@ -599,9 +604,9 @@ const CustomerOrders = () => {
                     <TableCell>Description</TableCell>
                     <TableCell align="center">Weight</TableCell>
                     <TableCell align="center">Due Date</TableCell>
-                    <TableCell align="center">Worker Name</TableCell>{" "}
-                    {/* New table header */}
+                    <TableCell align="center">Worker Name</TableCell>
                     <TableCell align="center">Status</TableCell>
+                    <TableCell align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -658,7 +663,7 @@ const CustomerOrders = () => {
                         {item.dueDate || "N/A"}
                       </TableCell>
                       <TableCell align="center">
-                        {item.workerName || "N/A"} 
+                        {item.workerName || "N/A"}
                       </TableCell>
                       <TableCell align="center">
                         <StatusChip
@@ -666,6 +671,18 @@ const CustomerOrders = () => {
                           status={item.status}
                           icon={getStatusIcon(item.status)}
                         />
+                      </TableCell>
+                      <TableCell align="center">
+                        {" "}
+                 
+                        <Tooltip title="Delete this item">
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDeleteOrderItem(item.id)} 
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </StyledTableRow>
                   ))}
@@ -756,7 +773,7 @@ const CustomerOrders = () => {
                 }
                 size="small"
                 fullWidth
-                required 
+                required
               />
               <TextField
                 select
@@ -908,7 +925,7 @@ const CustomerOrders = () => {
                   item.description &&
                   item.weight &&
                   item.dueDate &&
-                  item.workerName 
+                  item.workerName
               )
             }
             sx={{
@@ -936,3 +953,8 @@ const CustomerOrders = () => {
 };
 
 export default CustomerOrders;
+
+
+
+
+

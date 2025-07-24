@@ -48,7 +48,7 @@ const createCustomerOrder = async (req, res) => {
       description,
       weight,
       due_date,
-      worker_name, 
+      worker_name,
       order_group_id,
     } = req.body;
 
@@ -60,7 +60,7 @@ const createCustomerOrder = async (req, res) => {
     const dueDates = Array.isArray(due_date) ? due_date : [due_date];
     const workerNames = Array.isArray(worker_name)
       ? worker_name
-      : [worker_name]; 
+      : [worker_name];
 
     const groupId = order_group_id
       ? parseInt(order_group_id)
@@ -77,9 +77,9 @@ const createCustomerOrder = async (req, res) => {
           description: descriptions[i],
           weight: parseFloat(weights[i]),
           due_date: dueDate,
-          worker_name: workerNames[i], 
+          worker_name: workerNames[i],
           order_group_id: groupId,
-          status: "Pending", 
+          status: "Pending",
         },
       });
 
@@ -126,7 +126,7 @@ const updateCustomerOrder = async (req, res) => {
       status,
       worker_name,
       order_group_id,
-    } = req.body; 
+    } = req.body;
 
     const existingOrder = await prisma.customer_order.findUnique({
       where: { id: parseInt(id) },
@@ -204,9 +204,9 @@ const addExtraItemToOrderGroup = async (req, res) => {
         description,
         weight: parseFloat(weight),
         due_date: dueDate,
-        worker_name, 
+        worker_name,
         order_group_id: parseInt(order_group_id),
-        status: "Pending", 
+        status: "Pending",
       },
     });
 
@@ -233,17 +233,24 @@ const deleteCustomerOrder = async (req, res) => {
   try {
     const orderId = parseInt(req.params?.orderId?.toString());
 
+    const existingOrder = await prisma.customer_order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!existingOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
     await prisma.product_multiple_images.deleteMany({
       where: { customer_order_id: orderId },
     });
-
     const deletedOrder = await prisma.customer_order.delete({
       where: { id: orderId },
     });
 
-    res
-      .status(200)
-      .json({ message: "Successfully deleted", data: deletedOrder });
+    res.status(200).json({
+      message: "Successfully deleted",
+      data: deletedOrder,
+    });
   } catch (error) {
     console.error("Error deleting order:", error);
     res.status(500).json({ error: "Failed to delete order" });
@@ -288,18 +295,17 @@ const getAllCustomerOrders = async (req, res) => {
   try {
     const orders = await prisma.customer_order.findMany({
       select: {
-
         id: true,
         item_name: true,
         description: true,
         weight: true,
         due_date: true,
         status: true,
-        worker_name: true, 
+        worker_name: true,
         order_group_id: true,
         customer_id: true,
         created_at: true,
-        updatedAt: true, 
+        updatedAt: true,
         productImages: { select: { filename: true } },
         customers: { select: { name: true } },
       },
@@ -334,14 +340,13 @@ const getDueTomorrowOrders = async (req, res) => {
         status: "Pending",
       },
       select: {
-      
         id: true,
         item_name: true,
         description: true,
         weight: true,
         due_date: true,
         status: true,
-        worker_name: true, 
+        worker_name: true,
         order_group_id: true,
         customer_id: true,
         created_at: true,
@@ -358,7 +363,7 @@ const getDueTomorrowOrders = async (req, res) => {
       id: order.id,
       message: `${order.item_name} order due tomorrow for ${
         order.customers?.name || "Unknown Customer"
-      } (Worker: ${order.worker_name || "N/A"})`, 
+      } (Worker: ${order.worker_name || "N/A"})`,
       date: order.due_date,
       status: order.status,
     }));
