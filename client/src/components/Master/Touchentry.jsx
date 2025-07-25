@@ -54,6 +54,7 @@ const Masteradditems = () => {
           step="0.001"
           value={touchInput}
           onChange={(e) => setTouchInput(e.target.value)}
+          onWheel={(e) => e.target.blur()}
           placeholder="Enter touch value"
         />
 
@@ -66,7 +67,7 @@ const Masteradditems = () => {
           <table>
             <thead>
               <tr>
-                <th>SI.No</th> 
+                <th>SI.No</th>
                 <th>Touch Value</th>
               </tr>
             </thead>

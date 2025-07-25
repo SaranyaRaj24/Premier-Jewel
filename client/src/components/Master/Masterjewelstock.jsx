@@ -194,6 +194,7 @@ const handleEdit = (entry) => {
                   name="weight"
                   value={formData.weight}
                   onChange={handleChange}
+                  onWheel={(e) => e.target.blur()}
                   step="any"
                   min="0"
                   required
@@ -206,6 +207,7 @@ const handleEdit = (entry) => {
                   name="stoneWeight"
                   value={formData.stoneWeight}
                   onChange={handleChange}
+                  onWheel={(e) => e.target.blur()}
                   step="any"
                   min="0"
                 />
@@ -216,6 +218,7 @@ const handleEdit = (entry) => {
                   type="number"
                   name="finalWeight"
                   value={formData.finalWeight}
+                  onWheel={(e) => e.target.blur()}
                   onChange={handleChange}
                   step="any"
                   min="0"
@@ -230,6 +233,7 @@ const handleEdit = (entry) => {
                   name="touch"
                   value={formData.touch}
                   onChange={handleChange}
+                  onWheel={(e) => e.target.blur()}
                   step="any"
                   min="0"
                   max="100"
@@ -243,6 +247,7 @@ const handleEdit = (entry) => {
                   name="purityValue"
                   value={formData.purityValue}
                   onChange={handleChange}
+                  onWheel={(e) => e.target.blur()}
                   step="any"
                   min="0"
                   readOnly={!isEditMode}
