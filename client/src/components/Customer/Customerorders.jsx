@@ -581,7 +581,6 @@ const CustomerOrders = () => {
                     <AddCircleOutline />
                   </IconButton>
                 </Tooltip>
-
               </Box>
             </Box>
 
@@ -674,11 +673,10 @@ const CustomerOrders = () => {
                       </TableCell>
                       <TableCell align="center">
                         {" "}
-                 
                         <Tooltip title="Delete this item">
                           <IconButton
                             color="error"
-                            onClick={() => handleDeleteOrderItem(item.id)} 
+                            onClick={() => handleDeleteOrderItem(item.id)}
                           >
                             <Delete />
                           </IconButton>
@@ -752,6 +750,7 @@ const CustomerOrders = () => {
                 type="text"
                 value={item.weight}
                 onChange={(e) => handleChange(index, "weight", e.target.value)}
+                onWheel={(e) => e.target.blur()}
                 size="small"
                 fullWidth
                 required

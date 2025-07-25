@@ -14,8 +14,14 @@ import {
   Select,
   InputLabel,
   FormControl,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CloseIcon from "@mui/icons-material/Close";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Repair = () => {
@@ -24,10 +30,12 @@ const Repair = () => {
   const [givenWeights, setGivenWeights] = useState([0]);
   const [itemWeights, setItemWeights] = useState([0]);
   const [showWastage, setShowWastage] = useState(false);
-  const [stoneValue, setStoneValue] = useState("");
+  const [stoneValue, setStoneValue] = useState(0);
   const [wastageType, setWastageType] = useState("");
-  const [multiInput1, setMultiInput1] = useState("");
+  const [multiInput1, setMultiInput1] = useState(0);
   const [multiInput2, setMultiInput2] = useState("");
+  const [netWeight, setNetWeight] = useState(0);
+  const [repairRecords, setRepairRecords] = useState([]);
   const [goldsmith, setGoldsmith] = useState([]);
 
   const total = (arr) => arr.reduce((acc, val) => acc + Number(val || 0), 0);
@@ -36,6 +44,24 @@ const Repair = () => {
   const difference = totalGiven - totalItem;
 
   const handleAddField = (setFunc, arr) => setFunc([...arr, 0]);
+
+  useEffect(() => {
+    const reducedWeight = totalItem - Number(stoneValue || 0);
+    setMultiInput1(reducedWeight > 0 ? reducedWeight : 0);
+  }, [totalItem, stoneValue]);
+
+  useEffect(() => {
+    let calculatedNet = multiInput1;
+
+    if (wastageType === "%") {
+      calculatedNet =
+        multiInput1 - multiInput1 * (Number(multiInput2 || 0) / 100);
+    } else if (wastageType === "Touch") {
+      calculatedNet = multiInput1 * Number(multiInput2 || 1);
+    }
+
+    setNetWeight(calculatedNet > 0 ? calculatedNet : 0);
+  }, [multiInput1, multiInput2, wastageType]);
 
   useEffect(() => {
     const fetchGoldsmiths = async () => {
@@ -50,19 +76,90 @@ const Repair = () => {
     fetchGoldsmiths();
   }, []);
 
+  const handleSave = () => {
+    const newRecord = {
+      name: selectedName,
+      givenWeights: [...givenWeights],
+      totalGiven,
+      itemWeights: [...itemWeights],
+      totalItem,
+      stone: stoneValue,
+      wastageType,
+      touch: multiInput2 || 0,
+      netWeight,
+    };
+    setRepairRecords([...repairRecords, newRecord]);
+    setOpen(false);
+  };
+
   return (
     <div className="repair-container">
       <Button variant="contained" onClick={() => setOpen(true)}>
         New Repair
       </Button>
 
+      {repairRecords.length > 0 && (
+        <Table style={{ marginTop: "20px" }}>
+          <TableHead
+            sx={{
+              backgroundColor: "#e3f2fd",
+              "& th": {
+                backgroundColor: "#e3f2fd",
+                color: "#0d47a1",
+                fontWeight: "bold",
+                fontSize: "1rem",
+              },
+            }}
+          >
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Total Given</TableCell>
+              <TableCell>Total Item</TableCell>
+              <TableCell>Stone</TableCell>
+              <TableCell>Wastage Type</TableCell>
+              <TableCell>Touch</TableCell>
+              <TableCell>Net Weight</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {repairRecords.map((record, index) => (
+              <TableRow key={index}>
+                <TableCell>{record.name}</TableCell>
+                <TableCell>{record.totalGiven}</TableCell>
+                <TableCell>{record.totalItem}</TableCell>
+                <TableCell>{record.stone}</TableCell>
+                <TableCell>{record.wastageType}</TableCell>
+                <TableCell>{record.touch}</TableCell>
+                <TableCell>{record.netWeight}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>New Repair</DialogTitle>
+        <DialogTitle
+          sx={{
+            m: 0,
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          New Repair
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpen(false)}
+            sx={{ color: (theme) => theme.palette.grey[500] }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
             <InputLabel>Name</InputLabel>
@@ -101,13 +198,13 @@ const Repair = () => {
                 }}
                 fullWidth
                 margin="dense"
+                onWheel={(e) => e.target.blur()}
               />
             ))}
             <p>
               <strong>Total Given Weight:</strong> {totalGiven}
             </p>
           </div>
-
           <div className="weight-section">
             <div className="section-header">
               <strong>Item Weight</strong>
@@ -130,6 +227,7 @@ const Repair = () => {
                 }}
                 fullWidth
                 margin="dense"
+                onWheel={(e) => e.target.blur()}
               />
             ))}
             <p>
@@ -140,7 +238,6 @@ const Repair = () => {
           <p>
             <strong>Difference:</strong> {difference}
           </p>
-
           <FormControlLabel
             control={
               <Checkbox
@@ -156,9 +253,11 @@ const Repair = () => {
               <TextField
                 label="Stone"
                 fullWidth
+                type="number"
                 margin="normal"
                 value={stoneValue}
                 onChange={(e) => setStoneValue(e.target.value)}
+                onWheel={(e) => e.target.blur()}
               />
 
               <FormControl fullWidth margin="normal">
@@ -175,10 +274,10 @@ const Repair = () => {
 
               <div className="input-multiplication">
                 <TextField
-                  label="Input 1"
+                  label="Weight After Stone"
                   type="number"
                   value={multiInput1}
-                  onChange={(e) => setMultiInput1(e.target.value)}
+                  InputProps={{ readOnly: true }}
                   margin="normal"
                   style={{ marginRight: "1rem" }}
                 />
@@ -186,16 +285,30 @@ const Repair = () => {
                   *
                 </span>
                 <TextField
-                  label="Input 2"
+                  label={wastageType === "Touch" ? "Touch" : "Input 2"}
                   type="number"
                   value={multiInput2}
                   onChange={(e) => setMultiInput2(e.target.value)}
                   margin="normal"
                   style={{ marginLeft: "1rem" }}
+                  onWheel={(e) => e.target.blur()}
                 />
               </div>
+
+              <p>
+                <strong>Net Weight:</strong> {netWeight}
+              </p>
             </>
           )}
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSave}
+            style={{ marginTop: "15px" }}
+          >
+            Save
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

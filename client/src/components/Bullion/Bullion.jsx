@@ -170,7 +170,7 @@ const Bullion = () => {
         fetchAll();
       } catch (err) {
         console.error("Failed to add given detail", err);
-        toast.error("Failed to add installment.");
+        toast.error("Failed to add Installment");
       }
     } else {
       toast.error("Please provide valid Amount, Touch, and Rate.");
@@ -261,16 +261,16 @@ const handleSave = async () => {
 
       <Table>
         <TableHead
-                          sx={{
-                            backgroundColor: "#e3f2fd",
-                            "& th": {
-                              backgroundColor: "#e3f2fd",
-                              color: "#0d47a1",
-                              fontWeight: "bold",
-                              fontSize: "1rem",
-                            },
-                          }}
-                        >
+          sx={{
+            backgroundColor: "#e3f2fd",
+            "& th": {
+              backgroundColor: "#e3f2fd",
+              color: "#0d47a1",
+              fontWeight: "bold",
+              fontSize: "1rem",
+            },
+          }}
+        >
           <TableRow>
             <TableCell>Name</TableCell>
             <TableCell>Grams</TableCell>
@@ -359,18 +359,21 @@ const handleSave = async () => {
               onChange={(e) => setGrams(e.target.value)}
               fullWidth
               disabled={isEditMode}
+              onWheel={(e) => e.target.blur()}
             />
             <TextField
               label="Rate per gram"
               type="number"
               value={rate}
               onChange={(e) => setRate(e.target.value)}
+              onWheel={(e) => e.target.blur()}
               fullWidth
             />
             <TextField
               label="Total Purchase Amount"
               type="number"
               value={totalPurchaseAmount.toFixed(2)}
+              onWheel={(e) => e.target.blur()}
               InputProps={{ readOnly: true }}
               fullWidth
             />
@@ -393,12 +396,14 @@ const handleSave = async () => {
                 type="number"
                 value={newGivenAmount}
                 onChange={(e) => setNewGivenAmount(e.target.value)}
+                onWheel={(e) => e.target.blur()}
                 fullWidth
               />
               <TextField
                 label="Grams (Calculated)"
                 type="number"
                 value={newGivenGramsCalculated.toFixed(2)}
+                onWheel={(e) => e.target.blur()}
                 InputProps={{ readOnly: true }}
                 fullWidth
               />
@@ -406,6 +411,7 @@ const handleSave = async () => {
                 label="Touch"
                 type="number"
                 value={newGivenTouch}
+                onWheel={(e) => e.target.blur()}
                 onChange={(e) => setNewGivenTouch(e.target.value)}
                 fullWidth
               />
@@ -413,6 +419,7 @@ const handleSave = async () => {
                 label="Purity (Calculated)"
                 type="number"
                 value={newGivenPurityCalculated.toFixed(2)}
+                onWheel={(e) => e.target.blur()}
                 InputProps={{ readOnly: true }}
                 fullWidth
               />
