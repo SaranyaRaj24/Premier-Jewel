@@ -29,52 +29,44 @@ const NewJobCard = ({
     { id: null, weight: "", touch: "", purity: "" },
   ]);
   const [itemRows, setItemRows] = useState([
-    { id: null, weight: "", name: "" },
+    {
+      id: null,
+      weight: "",
+      name: "",
+      wastageValue: "",
+      wastageType: "Touch",
+      deductions: [{ id: null, type: "Stone", customType: "", weight: "" }],
+    },
   ]);
-  const [deductionRows, setDeductionRows] = useState([
-    { id: null, type: "Stone", customType: "", weight: "" },
+  const [receivedMetalReturns, setReceivedMetalReturns] = useState([
+    { id: null, weight: "", touch: "", purity: "" },
   ]);
-
   const [openingBalance, setOpeningBalance] = useState(0.0);
-
   const [netWeight, setNetWeight] = useState("0.000");
-  const [touch, setTouch] = useState("");
-  const [percentageSymbol, setPercentageSymbol] = useState("Touch");
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("");
-  const [wastage, setWastage] = useState(0);
 
   const symbolOptions = ["Touch", "%", "+"];
-
   const [masterItemOptions, setMasterItemOptions] = useState([]);
   const stoneOptions = ["Stone", "Enamel", "Beads", "Others"];
-
   const [displayDate, setDisplayDate] = useState(
     new Date().toLocaleDateString("en-IN")
   );
-
   useEffect(() => {
     const fetchMasterItems = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const response = await fetch(`${BACKEND_SERVER_URL}/api/master-items`);
-
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
             `Failed to fetch master items: ${response.status} ${response.statusText} - ${errorText}`
           );
         }
-
         const data = await response.json();
-        console.log("Fetched master items data:", data);
-
-        const itemNames = data.map((item) => item.itemName);
-
-        setMasterItemOptions(itemNames);
+        setMasterItemOptions(data.map((item) => item.itemName));
       } catch (err) {
         console.error("Error fetching master items:", err);
         setError(`Failed to load item options: ${err.message}`);
@@ -82,7 +74,6 @@ const NewJobCard = ({
         setIsLoading(false);
       }
     };
-
     fetchMasterItems();
   }, []);
 
@@ -95,13 +86,10 @@ const NewJobCard = ({
       try {
         const response = await fetch(
           `${BACKEND_SERVER_URL}/api/assignments/artisans/${artisanId}/last-balance`
-        ); 
+        );
 
         if (!response.ok) {
           if (response.status === 404) {
-            console.log(
-              "No previous job card found for this artisan. Setting Opening Balance to 0."
-            );
             setOpeningBalance(0.0);
           } else {
             const errorText = await response.text();
@@ -114,15 +102,15 @@ const NewJobCard = ({
           let lastBalance = parseFloat(data.balanceAmount || 0);
           if (data.balanceDirection === "Goldsmith") {
             lastBalance = lastBalance;
-          }else{
-            lastBalance = -lastBalance
+          } else {
+            lastBalance = -lastBalance;
           }
           setOpeningBalance(lastBalance);
         }
       } catch (err) {
         console.error("Error fetching goldsmith's last balance:", err);
         setError(`Failed to load opening balance: ${err.message}`);
-        setOpeningBalance(0.0); 
+        setOpeningBalance(0.0);
       } finally {
         setIsLoading(false);
       }
@@ -130,11 +118,10 @@ const NewJobCard = ({
     if (!initialData && artisanId) {
       fetchGoldsmithLastBalance();
     }
-  }, [artisanId, initialData]); 
+  }, [artisanId, initialData]);
 
   useEffect(() => {
     if (initialData) {
-      console.log("Initial Data Received:", initialData);
       setAssignmentId(initialData.id || null);
       setDescription(initialData.description || "");
       setGoldRows(
@@ -154,55 +141,66 @@ const NewJobCard = ({
               weight:
                 product.weight !== undefined ? String(product.weight) : "",
               name: product.itemType || "",
+              wastageValue:
+                product.adjustmentValue !== undefined
+                  ? String(product.adjustmentValue)
+                  : "",
+              wastageType: product.adjustmentType || "Touch",
+              deductions:
+                product.materialLosses && product.materialLosses.length > 0
+                  ? product.materialLosses.map((loss) => ({
+                      id: loss.id,
+                      type: loss.type || "Stone",
+                      customType: loss.customType || "",
+                      weight:
+                        loss.weight !== undefined ? String(loss.weight) : "",
+                    }))
+                  : [{ id: null, type: "Stone", customType: "", weight: "" }],
             }))
-          : [{ id: null, weight: "", name: "" }]
+          : [
+              {
+                id: null,
+                weight: "",
+                name: "",
+                wastageValue: "",
+                wastageType: "Touch",
+                deductions: [
+                  { id: null, type: "Stone", customType: "", weight: "" },
+                ],
+              },
+            ]
       );
-      setDeductionRows(
-        initialData.materialLosses && initialData.materialLosses.length > 0
-          ? initialData.materialLosses.map((loss) => ({
-              id: loss.id,
-              type: loss.type || "Stone",
-              customType: loss.customType || "",
-              weight: loss.weight !== undefined ? String(loss.weight) : "",
+      setReceivedMetalReturns(
+        initialData.receivedMetalReturns &&
+          initialData.receivedMetalReturns.length > 0
+          ? initialData.receivedMetalReturns.map((received) => ({
+              id: received.id,
+              weight:
+                received.weight !== undefined ? String(received.weight) : "",
+              touch: received.touch !== undefined ? String(received.touch) : "",
+              purity:
+                received.purity !== undefined ? String(received.purity) : "",
             }))
-          : [{ id: null, type: "Stone", customType: "", weight: "" }]
+          : [{ id: null, weight: "", touch: "", purity: "" }]
       );
       setNetWeight(
         initialData.netWeight !== undefined
           ? format(initialData.netWeight)
           : "0.000"
       );
-      setTouch(
-        initialData.itemTouch !== undefined ? String(initialData.itemTouch) : ""
+      setDisplayDate(
+        initialData.date
+          ? new Date(initialData.date).toLocaleDateString("en-IN")
+          : new Date().toLocaleDateString("en-IN")
       );
-      setPercentageSymbol(initialData.adjustmentType || "Touch");
-      setWastage(initialData.wastage !== undefined ? initialData.wastage : 0);
-      if (initialData.date) {
-        setDisplayDate(new Date(initialData.date).toLocaleDateString("en-IN"));
-      } else {
-        setDisplayDate(new Date().toLocaleDateString("en-IN"));
-      }
-
       setOpeningBalance(
         initialData.openingBalance !== undefined
           ? parseFloat(initialData.openingBalance)
           : 0.0
       );
-    } else {
-      setAssignmentId(null);
-      setDescription("");
-      setGoldRows([{ id: null, weight: "", touch: "", purity: "" }]);
-      setItemRows([{ id: null, weight: "", name: "" }]);
-      setDeductionRows([
-        { id: null, type: "Stone", customType: "", weight: "" },
-      ]);
-      setNetWeight("0.000");
-      setTouch("");
-      setPercentageSymbol("Touch");
-      setWastage(0);
-      setDisplayDate(new Date().toLocaleDateString("en-IN"));
     }
   }, [initialData]);
+
 
   const calculatePurity = (w, t) =>
     !isNaN(w) && !isNaN(t) ? ((w * t) / 100).toFixed(3) : "";
@@ -223,67 +221,76 @@ const NewJobCard = ({
     setItemRows(updated);
   };
 
-  const handleDeductionChange = (i, field, val) => {
-    const updated = [...deductionRows];
-    updated[i][field] = val;
-    setDeductionRows(updated);
+  const handleDeductionChange = (itemIndex, deductionIndex, field, val) => {
+    const updated = [...itemRows];
+    updated[itemIndex].deductions[deductionIndex][field] = val;
+    setItemRows(updated);
   };
 
-  const totalPurity = goldRows.reduce(
+  const handleReceivedRowChange = (i, field, val) => {
+    const copy = [...receivedMetalReturns];
+    copy[i][field] = val;
+    copy[i].purity = calculatePurity(
+      parseFloat(copy[i].weight),
+      parseFloat(copy[i].touch)
+    );
+    setReceivedMetalReturns(copy);
+  };
+
+  const totalInputPurityGiven = goldRows.reduce(
     (sum, row) => sum + parseFloat(row.purity || 0),
     0
   );
-
-  const totalBalance = openingBalance + totalPurity;
 
   const totalItemWeight = itemRows.reduce(
     (sum, item) => sum + parseFloat(item.weight || 0),
     0
   );
-  const totalDeductionWeight = deductionRows.reduce(
-    (sum, deduction) => sum + parseFloat(deduction.weight || 0),
+
+  const totalDeductionWeight = itemRows.reduce(
+    (sum, item) =>
+      sum +
+      item.deductions.reduce(
+        (dSum, deduction) => dSum + parseFloat(deduction.weight || 0),
+        0
+      ),
     0
   );
 
+  const totalFinishedPurity = itemRows.reduce((sum, item) => {
+    const totalDeductions = item.deductions.reduce(
+      (dSum, deduction) => dSum + parseFloat(deduction.weight || 0),
+      0
+    );
+    const itemNetWeight = parseFloat(item.weight || 0) - totalDeductions;
+    const wastageValue = parseFloat(item.wastageValue || 0);
+    let itemFinalPurity = 0;
+
+    if (item.wastageType === "Touch") {
+      itemFinalPurity = (itemNetWeight * wastageValue) / 100;
+    } else if (item.wastageType === "%") {
+      itemFinalPurity = itemNetWeight + (itemNetWeight * wastageValue) / 100;
+    } else if (item.wastageType === "+") {
+      itemFinalPurity = itemNetWeight + wastageValue;
+    }
+    return sum + itemFinalPurity;
+  }, 0);
+
+  const totalReceivedPurity = receivedMetalReturns.reduce(
+    (sum, row) => sum + parseFloat(row.purity || 0),
+    0
+  );
   useEffect(() => {
     let calculatedNetWeight = totalItemWeight - totalDeductionWeight;
     setNetWeight(format(calculatedNetWeight));
-  }, [itemRows, deductionRows, totalItemWeight, totalDeductionWeight]);
+  }, [itemRows, totalItemWeight, totalDeductionWeight]);
 
-  const getFinalPurityWithAdjustment = () => {
-    const base = parseFloat(netWeight);
-    const value = parseFloat(touch);
-
-    if (isNaN(base) || isNaN(value)) return "0.000";
-
-    let finalValue = base;
-    if (percentageSymbol === "Touch") {
-      finalValue = (base * value) / 100;
-    } else if (percentageSymbol === "%") {
-      finalValue = base + (base * value) / 100;
-    } else if (percentageSymbol === "+") {
-      finalValue = base + value;
-    }
-
-    return format(finalValue);
-  };
-
-  const finalPurityForBalance = getFinalPurityWithAdjustment();
-  const ownerGivesBalance =
-    parseFloat(finalPurityForBalance) > parseFloat(totalBalance);
+  const totalGivenToGoldsmith = openingBalance + totalInputPurityGiven;
+  const totalFromGoldsmith = totalFinishedPurity + totalReceivedPurity;
+  const ownerGivesBalance = totalFromGoldsmith > totalGivenToGoldsmith;
   const balanceDifference = Math.abs(
-    parseFloat(finalPurityForBalance) - parseFloat(totalBalance)
+    totalFromGoldsmith - totalGivenToGoldsmith
   );
-
-  useEffect(() => {
-    setWastage(parseFloat(finalPurityForBalance || 0));
-    console.log(
-      "Wastage set to finalPurityForBalance:",
-      finalPurityForBalance,
-      "Current Wastage State:",
-      wastage
-    );
-  }, [finalPurityForBalance]);
 
   const handleSaveInitialAssignment = async () => {
     setIsLoading(true);
@@ -295,17 +302,15 @@ const NewJobCard = ({
         title: `Job for ${goldsmithName} - ${displayDate}`,
         description,
         artisanId,
-        openingBalance: parseFloat(format(openingBalance)), 
-        totalInputPurity: parseFloat(format(totalPurity)),
-        totalBalance: parseFloat(format(totalBalance)),
+        openingBalance: parseFloat(format(openingBalance)),
+        totalInputPurity: parseFloat(format(totalInputPurityGiven)),
+        totalBalance: parseFloat(format(totalGivenToGoldsmith)),
         metalInputs: goldRows.map((row) => ({
           weight: parseFloat(row.weight || 0),
           touch: parseFloat(row.touch || 0),
           purity: parseFloat(row.purity || 0),
         })),
       };
-
-      console.log("Payload for initial assignment:", payload);
 
       const response = await fetch(`${BACKEND_SERVER_URL}/api/assignments`, {
         method: "POST",
@@ -332,11 +337,10 @@ const NewJobCard = ({
       const jobCardData = {
         ...fullData,
         netWeight: parseFloat(netWeight),
-        finalPurity: parseFloat(finalPurityForBalance),
+        finalPurity: parseFloat(totalFinishedPurity),
+        totalReceivedPurity: parseFloat(totalReceivedPurity),
         balanceDifference: parseFloat(balanceDifference),
         ownerGivesBalance,
-        adjustmentType: percentageSymbol,
-        adjustmentValue: parseFloat(touch || 0),
         date: displayDate,
         name: goldsmithName,
       };
@@ -367,37 +371,45 @@ const NewJobCard = ({
 
     try {
       const payload = {
-        description: description,
+        description,
         netWeight: parseFloat(netWeight),
-        itemTouch: parseFloat(touch || 0),
-        adjustmentType: percentageSymbol,
-        finalPurity: parseFloat(finalPurityForBalance),
+        itemTouch: parseFloat(totalFinishedPurity),
+        finalPurity: parseFloat(totalFinishedPurity),
+        totalReceivedPurity: parseFloat(totalReceivedPurity),
         balanceDirection: ownerGivesBalance ? "Owner" : "Goldsmith",
         balanceAmount: parseFloat(balanceDifference),
-        wastage: parseFloat(wastage || 0),
         finishedProducts: itemRows.map((item) => ({
           id: item.id,
           weight: parseFloat(item.weight || 0),
           itemType: item.name,
+          adjustmentValue: parseFloat(item.wastageValue || 0),
+          adjustmentType: item.wastageType,
         })),
-        materialLosses: deductionRows.map((deduction) => ({
-          id: deduction.id,
-          type: deduction.type,
-          customType: deduction.type === "Others" ? deduction.customType : null,
-          weight: parseFloat(deduction.weight || 0),
-        })),
+        materialLosses: itemRows.flatMap((item) =>
+          item.deductions.map((deduction) => ({
+            id: deduction.id,
+            type: deduction.type,
+            customType:
+              deduction.type === "Others" ? deduction.customType : null,
+            weight: parseFloat(deduction.weight || 0),
+          }))
+        ),
         metalInputs: goldRows.map((row) => ({
           id: row.id,
           weight: parseFloat(row.weight || 0),
           touch: parseFloat(row.touch || 0),
           purity: parseFloat(row.purity || 0),
         })),
+        receivedMetalReturns: receivedMetalReturns.map((row) => ({
+          id: row.id,
+          weight: parseFloat(row.weight || 0),
+          touch: parseFloat(row.touch || 0),
+          purity: parseFloat(row.purity || 0),
+        })),
         openingBalance: parseFloat(format(openingBalance)),
-        totalInputPurity: parseFloat(format(totalPurity)),
-        totalBalance: parseFloat(format(totalBalance)),
+        totalInputPurity: parseFloat(format(totalInputPurityGiven)),
+        totalBalance: parseFloat(format(totalGivenToGoldsmith)),
       };
-
-      console.log("Payload for update assignment:", payload);
 
       const response = await fetch(
         `${BACKEND_SERVER_URL}/api/assignments/${assignmentId}`,
@@ -424,11 +436,10 @@ const NewJobCard = ({
       const jobCardData = {
         ...fullData,
         netWeight: parseFloat(netWeight),
-        finalPurity: parseFloat(finalPurityForBalance),
+        finalPurity: parseFloat(totalFinishedPurity),
+        totalReceivedPurity: parseFloat(totalReceivedPurity),
         balanceDifference: parseFloat(balanceDifference),
         ownerGivesBalance,
-        adjustmentType: percentageSymbol,
-        adjustmentValue: parseFloat(touch || 0),
         date: displayDate,
         name: goldsmithName,
       };
@@ -444,6 +455,7 @@ const NewJobCard = ({
   };
 
   const isItemDeliveryEnabled = assignmentId !== null;
+  const isReceivedSectionEnabled = assignmentId !== null;
 
   return (
     <>
@@ -456,8 +468,8 @@ const NewJobCard = ({
         scroll="paper"
         sx={{
           "& .MuiDialog-paper": {
-            width: "95%",
-            minWidth: "800px",
+            width: "96%",
+            minWidth: "1100px",
           },
         }}
       >
@@ -501,17 +513,15 @@ const NewJobCard = ({
                 onChange={(e) => setDescription(e.target.value)}
                 rows="3"
                 className="textarea"
-                placeholder="Enter job description..."
+                placeholder="Enter job Description...."
                 disabled={isLoading || assignmentId !== null}
               />
             </div>
 
             <div className="section">
-              <h3 className="section-title">Gold Calculation</h3>
+              <h3 className="section-title">Given Details</h3>
               {goldRows.map((row, i) => (
                 <div key={row.id || `gold-${i}`} className="row">
-                  {/* */}
-
                   <input
                     type="number"
                     placeholder="Weight"
@@ -521,6 +531,7 @@ const NewJobCard = ({
                     }
                     className="input"
                     disabled={isLoading || assignmentId !== null}
+                    onWheel={(e) => e.target.blur()}
                   />
                   <span className="operator">x</span>
                   <input
@@ -530,6 +541,7 @@ const NewJobCard = ({
                     onChange={(e) =>
                       handleGoldRowChange(i, "touch", e.target.value)
                     }
+                    onWheel={(e) => e.target.blur()}
                     className="input"
                     disabled={isLoading || assignmentId !== null}
                   />
@@ -558,7 +570,7 @@ const NewJobCard = ({
               <div className="total-purity-container">
                 <span className="total-purity-label">Total Purity:</span>
                 <span className="total-purity-value">
-                  {format(totalPurity)}
+                  {format(totalInputPurityGiven)}
                 </span>
               </div>
             </div>
@@ -574,12 +586,18 @@ const NewJobCard = ({
                 </div>
                 <div className="balance-display-row">
                   <span className="balance-label">Total Purity:</span>
-                  <span className="balance-value">{format(totalPurity)}</span>
+                  <span className="balance-value">
+                    {format(totalInputPurityGiven)}
+                  </span>
                 </div>
                 <div>----------</div>
                 <div className="balance-display-row">
-                  <span className="balance-label">Total Balance:</span>
-                  <span className="balance-value">{format(totalBalance)}</span>
+                  <span className="balance-label">
+                    Total Given to Goldsmith:
+                  </span>
+                  <span className="balance-value">
+                    {format(totalGivenToGoldsmith)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -592,187 +610,368 @@ const NewJobCard = ({
               }}
             >
               <h3 className="section-title">Item Delivery</h3>
-              {itemRows.map((item, i) => (
-                <div key={item.id || `item-${i}`} className="row">
-                  {/* */}
-
-                  <input
-                    type="number"
-                    placeholder="Item Weight"
-                    value={item.weight}
-                    onChange={(e) =>
-                      handleItemRowChange(i, "weight", e.target.value)
-                    }
-                    className="input"
-                    disabled={isLoading || !isItemDeliveryEnabled}
-                  />
-                  <select
-                    value={item.name}
-                    onChange={(e) =>
-                      handleItemRowChange(i, "name", e.target.value)
-                    }
-                    className="select"
-                    disabled={isLoading || !isItemDeliveryEnabled}
-                  >
-                    <option value="">Select Item</option>
-
-                    {masterItemOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+              <div className="item-delivery-container">
+                <div className="item-delivery-header">
+                  <span>Item Weight</span>
+                  <span>Item Name</span>
+                  <span>Deductions</span>
+                  <span>Net Weight</span>
+                  <span>Wastage Type</span>
+                  <span>Wastage Value</span>
+                  <span>Final Purity</span>
                 </div>
-              ))}
-              <button
-                onClick={() =>
-                  setItemRows([...itemRows, { id: null, weight: "", name: "" }])
-                }
-                className="circle-button"
-                disabled={isLoading || !isItemDeliveryEnabled}
-              >
-                +
-              </button>
-              <div className="total-purity-container">
-                <span className="total-purity-label">Total Item Weight:</span>
-                <span className="total-purity-value">
-                  {format(totalItemWeight)}
-                </span>
-              </div>
 
-              <div className="deduction-section">
-                <h4>Deductions</h4>
-                {deductionRows.map((deduction, i) => (
-                  <div
-                    key={deduction.id || `deduction-${i}`}
-                    className="deduction-row"
-                  >
-             
+                {itemRows.map((item, itemIndex) => {
+                  const totalDeductions = item.deductions.reduce(
+                    (sum, deduction) => sum + parseFloat(deduction.weight || 0),
+                    0
+                  );
+                  const itemNetWeight =
+                    parseFloat(item.weight || 0) - totalDeductions;
+                  const wastageValue = parseFloat(item.wastageValue || 0);
+                  let finalPurity = 0;
 
-                    <select
-                      value={deduction.type}
-                      onChange={(e) =>
-                        handleDeductionChange(i, "type", e.target.value)
-                      }
-                      className="deduction-select"
-                      disabled={isLoading || !isItemDeliveryEnabled}
+                  if (item.wastageType === "Touch") {
+                    finalPurity = (itemNetWeight * wastageValue) / 100;
+                  } else if (item.wastageType === "%") {
+                    finalPurity =
+                      itemNetWeight + (itemNetWeight * wastageValue) / 100;
+                  } else if (item.wastageType === "+") {
+                    finalPurity = itemNetWeight + wastageValue;
+                  }
+
+                  return (
+                    <div
+                      key={item.id || `item-${itemIndex}`}
+                      className="item-delivery-row"
                     >
-                      {stoneOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    {deduction.type === "Others" && (
+                      <input
+                        type="number"
+                        placeholder="Weight"
+                        value={item.weight}
+                        onChange={(e) =>
+                          handleItemRowChange(
+                            itemIndex,
+                            "weight",
+                            e.target.value
+                          )
+                        }
+                        className="input-small"
+                        disabled={isLoading || !isItemDeliveryEnabled}
+                        onWheel={(e) => e.target.blur()}
+                      />
+
+                      <select
+                        value={item.name}
+                        onChange={(e) =>
+                          handleItemRowChange(itemIndex, "name", e.target.value)
+                        }
+                        className="select-small"
+                        disabled={isLoading || !isItemDeliveryEnabled}
+                      >
+                        <option value="">Item</option>
+                        {masterItemOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="deductions-column">
+                        {item.deductions.map((deduction, deductionIndex) => (
+                          <div key={deductionIndex} className="deduction-row">
+                            <select
+                              value={deduction.type}
+                              onChange={(e) =>
+                                handleDeductionChange(
+                                  itemIndex,
+                                  deductionIndex,
+                                  "type",
+                                  e.target.value
+                                )
+                              }
+                              className="select-small"
+                              disabled={isLoading || !isItemDeliveryEnabled}
+                            >
+                              {stoneOptions.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+
+                            {deduction.type === "Others" && (
+                              <input
+                                type="text"
+                                value={deduction.customType}
+                                onChange={(e) =>
+                                  handleDeductionChange(
+                                    itemIndex,
+                                    deductionIndex,
+                                    "customType",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Specify"
+                                className="input-small"
+                                disabled={isLoading || !isItemDeliveryEnabled}
+                              />
+                            )}
+
+                            <input
+                              type="number"
+                              value={deduction.weight}
+                              onChange={(e) =>
+                                handleDeductionChange(
+                                  itemIndex,
+                                  deductionIndex,
+                                  "weight",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Weight"
+                              className="input-small"
+                              disabled={isLoading || !isItemDeliveryEnabled}
+                              onWheel={(e) => e.target.blur()}
+                            />
+
+                            <button
+                              onClick={() => {
+                                const updated = [...itemRows];
+                                updated[itemIndex].deductions.splice(
+                                  deductionIndex,
+                                  1
+                                );
+                                setItemRows(updated);
+                              }}
+                              className="remove-button"
+                              disabled={
+                                isLoading ||
+                                !isItemDeliveryEnabled ||
+                                item.deductions.length <= 1
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          onClick={() => {
+                            const updated = [...itemRows];
+                            updated[itemIndex].deductions.push({
+                              id: null,
+                              type: "Stone",
+                              customType: "",
+                              weight: "",
+                            });
+                            setItemRows(updated);
+                          }}
+                          className="add-deduction-button"
+                          disabled={isLoading || !isItemDeliveryEnabled}
+                        >
+                          + 
+                        </button>
+                      </div>
+
                       <input
                         type="text"
-                        placeholder="Specify type"
-                        value={deduction.customType}
-                        onChange={(e) =>
-                          handleDeductionChange(i, "customType", e.target.value)
-                        }
-                        className="deduction-input"
-                        disabled={isLoading || !isItemDeliveryEnabled}
+                        readOnly
+                        value={format(itemNetWeight)}
+                        className="input-small input-read-only"
                       />
-                    )}
-                    <input
-                      type="number"
-                      value={deduction.weight}
-                      onChange={(e) =>
-                        handleDeductionChange(i, "weight", e.target.value)
-                      }
-                      className="deduction-input"
-                      placeholder="Weight"
-                      disabled={isLoading || !isItemDeliveryEnabled}
-                    />
-                  </div>
-                ))}
+
+                      <select
+                        value={item.wastageType}
+                        onChange={(e) =>
+                          handleItemRowChange(
+                            itemIndex,
+                            "wastageType",
+                            e.target.value
+                          )
+                        }
+                        className="select-small"
+                        disabled={isLoading || !isItemDeliveryEnabled}
+                      >
+                        {symbolOptions.map((symbol) => (
+                          <option key={symbol} value={symbol}>
+                            {symbol}
+                          </option>
+                        ))}
+                      </select>
+
+                      <input
+                        type="number"
+                        placeholder="Value"
+                        value={item.wastageValue}
+                        onChange={(e) =>
+                          handleItemRowChange(
+                            itemIndex,
+                            "wastageValue",
+                            e.target.value
+                          )
+                        }
+                        className="input-small"
+                        disabled={isLoading || !isItemDeliveryEnabled}
+                        onWheel={(e) => e.target.blur()}
+                      />
+
+                      <span className="final-purity-value">
+                        {format(finalPurity)}
+                      </span>
+                    </div>
+                  );
+                })}
+
                 <button
-                  onClick={() =>
-                    setDeductionRows([
-                      ...deductionRows,
-                      { id: null, type: "Stone", customType: "", weight: "" },
-                    ])
-                  }
+                  onClick={() => {
+                    setItemRows([
+                      ...itemRows,
+                      {
+                        id: null,
+                        weight: "",
+                        name: "",
+                        wastageValue: "",
+                        wastageType: "Touch",
+                        deductions: [
+                          {
+                            id: null,
+                            type: "Stone",
+                            customType: "",
+                            weight: "",
+                          },
+                        ],
+                      },
+                    ]);
+                  }}
                   className="circle-button"
                   disabled={isLoading || !isItemDeliveryEnabled}
                 >
                   +
                 </button>
-                <div className="total-purity-container">
-                  <span className="total-purity-label">
-                    Total Stone Weight:
-                  </span>
+              </div>
+              <div className="totals-section">
+                <div className="total-row">
+                  <span className="total-purity-label">Total Item Purity:</span>
                   <span className="total-purity-value">
-                    {format(totalDeductionWeight)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="net-weight-display">
-                <span className="header-label">Net Weight:</span>
-                <span className="net-weight-value" style={{ color: "blue" }}>
-                  {netWeight}
-                </span>
-              </div>
-
-              <div className="input-group-fluid" style={{ marginTop: "10px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <select
-                    style={{ width: "6rem" }}
-                    value={percentageSymbol}
-                    onChange={(e) => setPercentageSymbol(e.target.value)}
-                    className="select-small"
-                    disabled={isLoading || !isItemDeliveryEnabled}
-                  >
-                    {symbolOptions.map((symbol) => (
-                      <option key={symbol} value={symbol}>
-                        {symbol}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="number"
-                    placeholder="Enter Value"
-                    value={touch}
-                    onChange={(e) => setTouch(e.target.value)}
-                    className="input"
-                    disabled={isLoading || !isItemDeliveryEnabled}
-                  />
-
-                  <span className="operator">=</span>
-                  <span className="net-weight-value" style={{ color: "red" }}>
-                    {finalPurityForBalance}
+                    {format(totalFinishedPurity)}
                   </span>
                 </div>
               </div>
             </div>
 
-            {parseFloat(netWeight) !== 0 && (
+            <div
+              className="section"
+              style={{
+                opacity: isReceivedSectionEnabled ? 1 : 0.5,
+                pointerEvents: isReceivedSectionEnabled ? "auto" : "none",
+              }}
+            >
+              <h3 className="section-title">Received Section</h3>
+              <div className="received-section-container">
+                <div className="received-section-header">
+                  <span>Weight</span>
+                  <span>Touch</span>
+                  <span>Purity</span>
+                </div>
+                {receivedMetalReturns.map((row, i) => (
+                  <div
+                    key={row.id || `received-${i}`}
+                    className="received-section-row"
+                  >
+                    <input
+                      type="number"
+                      placeholder="Weight"
+                      value={row.weight}
+                      onChange={(e) =>
+                        handleReceivedRowChange(i, "weight", e.target.value)
+                      }
+                      className="input-small"
+                      disabled={isLoading || !isReceivedSectionEnabled}
+                      onWheel={(e) => e.target.blur()}
+                    />
+                    <span className="operator">x</span>
+                    <input
+                      type="number"
+                      placeholder="Touch"
+                      value={row.touch}
+                      onChange={(e) =>
+                        handleReceivedRowChange(i, "touch", e.target.value)
+                      }
+                      className="input-small"
+                      disabled={isLoading || !isReceivedSectionEnabled}
+                      onWheel={(e) => e.target.blur()}
+                    />
+                    <span className="operator">=</span>
+                    <input
+                      type="text"
+                      readOnly
+                      placeholder="Purity"
+                      value={format(row.purity)}
+                      className="input-read-only input-small"
+                    />
+                  </div>
+                ))}
+                <button
+                  onClick={() =>
+                    setReceivedMetalReturns([
+                      ...receivedMetalReturns,
+                      { id: null, weight: "", touch: "", purity: "" },
+                    ])
+                  }
+                  className="circle-button"
+                  disabled={isLoading || !isReceivedSectionEnabled}
+                >
+                  +
+                </button>
+              </div>
+              <div className="totals-section">
+                <div className="total-row">
+                  <span className="total-purity-label">
+                    Total Received Purity:
+                  </span>
+                  <span className="total-purity-value">
+                    {format(totalReceivedPurity)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {parseFloat(totalGivenToGoldsmith) !== 0 && (
               <div className="final-balance-section">
-                {ownerGivesBalance ? (
-                  <p className="balance-text-owner">
-                    Owner should give balance:
-                    <span className="balance-amount">
-                      {format(balanceDifference)}
+                <h3 className="section-title">Final Balance</h3>
+                <div className="balance-block">
+                  <div className="balance-display-row">
+                    <span className="balance-label">
+                      Total Given to Goldsmith:
                     </span>
-                  </p>
-                ) : (
-                  <p className="balance-text-artisan">
-                    Goldsmith should give balance:
-                    <span className="balance-amount">
-                      {format(balanceDifference)}
+                    <span className="balance-value">
+                      {format(totalGivenToGoldsmith)}
                     </span>
-                  </p>
-                )}
+                  </div>
+                  <div className="balance-display-row">
+                    <span className="balance-label">Total From Goldsmith:</span>
+                    <span className="balance-value">
+                      {format(totalFromGoldsmith)}
+                    </span>
+                  </div>
+                  <div>----------</div>
+                  {ownerGivesBalance ? (
+                    <p className="balance-text-owner">
+                      Owner should give balance:
+                      <span className="balance-amount">
+                        {format(balanceDifference)}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="balance-text-artisan">
+                      Goldsmith should give balance:
+                      <span className="balance-amount">
+                        {format(balanceDifference)}
+                      </span>
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -818,4 +1017,3 @@ const NewJobCard = ({
 };
 
 export default NewJobCard;
-
