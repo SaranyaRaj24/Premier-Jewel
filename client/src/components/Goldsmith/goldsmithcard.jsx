@@ -35,13 +35,27 @@ const GoldsmithDetails = () => {
     const fetchJobCards = async () => {
       try {
         const response = await fetch(
-          `${BACKEND_SERVER_URL}/api/assignments/artisan/${id}`
+          `${BACKEND_SERVER_URL}/api/assignments/goldsmith/${id}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch job cards");
         }
+
         const data = await response.json();
-        setJobcards(data);
+        const { jobcards: fetchedJobcards, total: totalRecords } = data;
+
+        const totalMap = new Map();
+        totalRecords.forEach((item) => {
+          totalMap.set(item.id, item);
+        });
+
+      
+        const mergedJobcards = fetchedJobcards.map((jobcard) => ({
+          ...jobcard,
+          totalRecord: totalMap.get(jobcard.id) || null, 
+        }));
+
+        setJobcards(mergedJobcards);
       } catch (error) {
         console.error("Error fetching job cards:", error);
       } finally {
@@ -62,43 +76,27 @@ const GoldsmithDetails = () => {
     setOpenJobcardDialog(true);
   };
 
-  const handleSaveJobcard = (newJobcardData) => {
-    if (newJobcardData) {
-      setJobcards((prev) => {
-        const existingIndex = prev.findIndex(
-          (jc) => jc.id === newJobcardData.id
-        );
-        if (existingIndex > -1) {
-          const updatedJobcards = [...prev];
-          updatedJobcards[existingIndex] = newJobcardData;
-          return updatedJobcards;
-        } else {
-          return [...prev, newJobcardData];
-        }
-      });
-    }
-    setOpenJobcardDialog(false);
-  };
+  const handleSaveJobcard = (responseData) => {
+    if (!responseData || !responseData.jobcard) return;
 
-  const handleDeleteJobcard = async (jobcardIdToDelete) => {
-    if (window.confirm("Are you sure you want to delete this job card?")) {
-      try {
-        const response = await fetch(
-          `${BACKEND_SERVER_URL}/api/assignments/${jobcardIdToDelete}`,
-          {
-            method: "DELETE",
-          }
-        );
+    const { jobcard, totalRecord } = responseData;
+    const newJobcardEntry = {
+      ...jobcard,
+      totalRecord,
+    };
 
-        if (!response.ok) {
-          throw new Error("Failed to delete job card");
-        }
-
-        setJobcards((prev) => prev.filter((jc) => jc.id !== jobcardIdToDelete));
-      } catch (error) {
-        console.error("Error deleting job card:", error);
+    setJobcards((prev) => {
+      const existingIndex = prev.findIndex((jc) => jc.id === jobcard.id);
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        updated[existingIndex] = newJobcardEntry;
+        return updated;
+      } else {
+        return [...prev, newJobcardEntry];
       }
-    }
+    });
+
+    setOpenJobcardDialog(false);
   };
 
   const handleCloseJobcard = () => {
@@ -208,97 +206,43 @@ const GoldsmithDetails = () => {
               </TableHead>
 
               <TableBody>
-                {jobcards.map((jc, index) => {
-                  const metal = jc.metalInputs?.[0] || {};
-                  const finishedProduct = jc.finishedProducts?.[0] || {};
-                  const materialLoss = jc.materialLosses?.[0] || {};
-                  const displayPurity =
-                    metal.purity != null ? metal.purity.toFixed(3) : "-";
-                  const displayOpeningBalance =
-                    jc.openingBalance != null
-                      ? jc.openingBalance.toFixed(3)
-                      : "-";
-                  const displayTotalBalance =
-                    jc.totalBalance != null ? jc.totalBalance.toFixed(3) : "-";
-                  const displayItemWeight =
-                    finishedProduct.weight != null
-                      ? finishedProduct.weight.toFixed(3)
-                      : "-";
-                  const displayStoneWeight =
-                    materialLoss.weight != null
-                      ? materialLoss.weight.toFixed(3)
-                      : "-";
-                  const displayWastage =
-                    jc.wastage != null ? jc.wastage.toFixed(3) : "-";
-                  const displayBalanceAmount =
-                    jc.balanceAmount != null
-                      ? jc.balanceAmount.toFixed(3)
-                      : "-";
+                {jobcards.map((jobcard, index) => (
+                  <TableRow key={jobcard.id || index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      {jobcard.createdAt
+                        ? new Date(jobcard.createdAt).toLocaleDateString(
+                            "en-IN"
+                          )
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{jobcard.description || "-"}</TableCell>
 
-                  const balanceColor =
-                    jc.balanceDirection === "Owner" ? "red" : "green";
+                    <TableCell>{jobcard.weight ?? "-"}</TableCell>
+                    <TableCell>{jobcard.touch ?? "-"}</TableCell>
+                    <TableCell>{jobcard.purity.toFixed(3) ?? "-"}</TableCell>
+                    <TableCell>
+                      {jobcard.totalRecord?.openingBalance.toFixed
+                      (3) ?? "-"}
+                    </TableCell>
+                    <TableCell>
+                      {jobcard.totalRecord?.totalBalance.toFixed(3) ?? "-"}
+                    </TableCell>
 
-                  const balanceOwedByText =
-                    jc.balanceDirection === "Artisan"
-                      ? "Goldsmith"
-                      : jc.balanceDirection;
+                    <TableCell>{jobcard.itemName || "-"}</TableCell>
+                    <TableCell>{jobcard.itemWeight ?? "-"}</TableCell>
 
-                  return (
-                    <TableRow key={jc.id} hover>
-                      <TableCell align="center">{index + 1}</TableCell>
-                      <TableCell align="center">
-                        {new Date(jc.date).toLocaleDateString("en-IN")}
-                      </TableCell>
-                      <TableCell align="center">{jc.description}</TableCell>
-                      <TableCell align="center">
-                        {metal.weight ?? "-"}
-                      </TableCell>
-                      <TableCell align="center">{metal.touch ?? "-"}</TableCell>
-                      <TableCell align="center">{displayPurity}</TableCell>
-                      <TableCell align="center">
-                        {displayOpeningBalance}
-                      </TableCell>
-                      <TableCell align="center">
-                        {displayTotalBalance}
-                      </TableCell>
-                      <TableCell align="center">
-                        {finishedProduct.itemType ?? "-"}
-                      </TableCell>
-                      <TableCell align="center">{displayItemWeight}</TableCell>
-                      <TableCell align="center">{displayStoneWeight}</TableCell>
-                      <TableCell align="center">{displayWastage}</TableCell>
-                      <TableCell align="center">
-                        {balanceOwedByText ?? "-"}
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ color: balanceColor, fontWeight: "bold" ,fontSize:"1.1rem"}}
-                      >
-                        {displayBalanceAmount}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Box display="flex" justifyContent="center" gap={1}>
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleEditJobcard(jc)}
-                            size="small"
-                            sx={{ padding: "4px" }}
-                          >
-                            <Visibility fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={() => handleDeleteJobcard(jc.id)}
-                            size="small"
-                            sx={{ padding: "4px" }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                    <TableCell>{jobcard.totalStoneWeight ?? "-"}</TableCell>
+                    <TableCell>{jobcard.wastage ?? "-"}</TableCell>
+                    <TableCell>{jobcard.balanceOwedBy || "-"}</TableCell>
+                    <TableCell>{jobcard.balance ?? "-"}</TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={() => handleEditJobcard(jobcard)}>
+                        <Visibility color="primary" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Paper>
