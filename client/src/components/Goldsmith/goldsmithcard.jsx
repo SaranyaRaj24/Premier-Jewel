@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import {
   Container,
@@ -17,85 +17,87 @@ import {
   Box,
   CircularProgress,
 } from "@mui/material";
-import { Add, Visibility, Delete } from "@mui/icons-material";
+import { Add, Visibility } from "@mui/icons-material";
 import NewJobCard from "../Goldsmith/Newjobcard";
 import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const GoldsmithDetails = () => {
   const { id, name } = useParams();
   const location = useLocation();
+    const [error, setError] = useState(null);
   const { phone, address } = location.state || {};
 
   const [openJobcardDialog, setOpenJobcardDialog] = useState(false);
   const [jobcards, setJobcards] = useState([]);
+  const [totalRecords, setTotalRecords] = useState([]);
   const [selectedJobcard, setSelectedJobcard] = useState(null);
   const [loadingJobcards, setLoadingJobcards] = useState(true);
 
-  useEffect(() => {
-    const fetchJobCards = async () => {
-      try {
-        const response = await fetch(
-          `${BACKEND_SERVER_URL}/api/assignments/goldsmith/${id}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch job cards");
-        }
+  const fetchJobcards = useCallback(async () => {
+    try {
+      setLoadingJobcards(true);
+      const res = await fetch(`${BACKEND_SERVER_URL}/api/assignments/goldsmith/${id}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
 
-        const data = await response.json();
-        const { jobcards: fetchedJobcards, total: totalRecords } = data;
-
-        const totalMap = new Map();
-        totalRecords.forEach((item) => {
-          totalMap.set(item.id, item);
-        });
-
-      
-        const mergedJobcards = fetchedJobcards.map((jobcard) => ({
-          ...jobcard,
-          totalRecord: totalMap.get(jobcard.id) || null, 
-        }));
-
-        setJobcards(mergedJobcards);
-      } catch (error) {
-        console.error("Error fetching job cards:", error);
-      } finally {
-        setLoadingJobcards(false);
+      if (data.success) {
+        const sortedJobcards = [...(data.jobcards || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const sortedTotalRecords = [...(data.totalRecords || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setJobcards(sortedJobcards);
+        setTotalRecords(sortedTotalRecords);
+      } else {
+        setJobcards([]);
+        setTotalRecords([]);
       }
-    };
-
-    fetchJobCards();
+      setLoadingJobcards(false);
+    } catch (err) {
+      console.error("Error fetching jobcards:", err);
+      setJobcards([]);
+      setTotalRecords([]);
+      setLoadingJobcards(false);
+    }
   }, [id]);
+
+
+  useEffect(() => {
+    if (id) fetchJobcards();
+  }, [id, fetchJobcards]);
 
   const handleCreateJobcard = () => {
     setSelectedJobcard(null);
     setOpenJobcardDialog(true);
   };
 
-  const handleEditJobcard = (jobcard) => {
-    setSelectedJobcard(jobcard);
-    setOpenJobcardDialog(true);
+const handleEditJobcard = (jobcard) => {
+  const enhancedJobcard = {
+    ...jobcard,
+    deliveries: (jobcard.deliveries || []).map((delivery) => ({
+      ...delivery,
+      finalPurity: delivery.finalPurity || calculateFinalPurity(delivery),
+    })),
   };
+  setSelectedJobcard(enhancedJobcard);
+  setOpenJobcardDialog(true);
+};
 
-  const handleSaveJobcard = (responseData) => {
-    if (!responseData || !responseData.jobcard) return;
+const calculateFinalPurity = (delivery) => {
+  const itemWeight = parseFloat(delivery.itemWeight || 0);
+  const stoneWeight = parseFloat(delivery.stoneWeight || 0);
+  const wastageValue = parseFloat(delivery.wastageValue || 0);
+  const netWeight = itemWeight - stoneWeight;
 
-    const { jobcard, totalRecord } = responseData;
-    const newJobcardEntry = {
-      ...jobcard,
-      totalRecord,
-    };
+  if (delivery.wastageType === "Touch") {
+    return (netWeight * wastageValue) / 100;
+  } else if (delivery.wastageType === "%") {
+    return netWeight + (netWeight * wastageValue) / 100;
+  } else if (delivery.wastageType === "+") {
+    return netWeight + wastageValue;
+  }
+  return 0;
+};
 
-    setJobcards((prev) => {
-      const existingIndex = prev.findIndex((jc) => jc.id === jobcard.id);
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex] = newJobcardEntry;
-        return updated;
-      } else {
-        return [...prev, newJobcardEntry];
-      }
-    });
-
+  const handleSaveJobcard = () => {
+    fetchJobcards();
     setOpenJobcardDialog(false);
   };
 
@@ -103,9 +105,53 @@ const GoldsmithDetails = () => {
     setOpenJobcardDialog(false);
     setSelectedJobcard(null);
   };
+  const getJobcardBalance = (jobcard) => {
+    const givenPurity = jobcard.purity || 0;
+    let receivedPurity = 0;
+
+    if (jobcard.deliveries && jobcard.deliveries.length > 0) {
+      jobcard.deliveries.forEach((delivery) => {
+        receivedPurity += delivery.finalPurity || 0;
+      });
+    }
+
+    return givenPurity - receivedPurity;
+  };
+
+  const getJobcardBalanceStatus = (jobcard) => {
+    const balance = getJobcardBalance(jobcard);
+    if (balance > 0) return "Goldsmith";
+    if (balance < 0) return "Owner";
+    return "Settled";
+  };
+
+  const getJobcardNumericalBalance = (jobcard) => {
+    return Math.abs(getJobcardBalance(jobcard)).toFixed(3);
+  };
+
+  const calculateNetWeight = (delivery) => {
+    const itemWeight = delivery.itemWeight || 0;
+    const stoneWeight = delivery.stoneWeight || 0;
+    return (itemWeight - stoneWeight).toFixed(3);
+  };
+
+  const getTotalRecordForJobcard = (jobcard, index) => {
+    return totalRecords[index];
+  };
+
+  const calculateRunningBalance = (jobcard, index) => {
+    const totalRecord = getTotalRecordForJobcard(jobcard, index);
+    return totalRecord?.totalBalance || 0;
+  };
+
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xxl" sx={{ py: 3 }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Error: {error}
+        </Alert>
+      )}
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography
           variant="h5"
@@ -167,7 +213,7 @@ const GoldsmithDetails = () => {
           </Paper>
         ) : (
           <Paper elevation={2}>
-            <Table>
+             <Table sx={{ minWidth: 1200 }}>
               <TableHead
                 sx={{
                   backgroundColor: "#e3f2fd",
@@ -176,9 +222,6 @@ const GoldsmithDetails = () => {
                     color: "#0d47a1",
                     fontWeight: "bold",
                     fontSize: "1rem",
-                    textAlign: "center",
-                    verticalAlign: "middle",
-                    padding: "8px",
                   },
                 }}
               >
@@ -190,61 +233,156 @@ const GoldsmithDetails = () => {
                   <TableCell rowSpan={2}>OB</TableCell>
                   <TableCell rowSpan={2}>TB</TableCell>
                   <TableCell colSpan={2}>Item Delivery</TableCell>
-                  <TableCell rowSpan={2}>Total Stone WT</TableCell>
+                  <TableCell rowSpan={2}>Stone WT</TableCell>
                   <TableCell rowSpan={2}>Wastage</TableCell>
+                  <TableCell rowSpan={2}>Net WT</TableCell>
+                  <TableCell rowSpan={2}>Final Purity</TableCell>
                   <TableCell rowSpan={2}>Balance Owed By</TableCell>
                   <TableCell rowSpan={2}>Balance</TableCell>
                   <TableCell rowSpan={2}>Actions</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>W</TableCell>
-                  <TableCell>T</TableCell>
-                  <TableCell>P</TableCell>
+                  <TableCell>Weight</TableCell>
+                  <TableCell>Touch</TableCell>
+                  <TableCell>Purity</TableCell>
                   <TableCell>Item Name</TableCell>
                   <TableCell>Item Weight</TableCell>
                 </TableRow>
               </TableHead>
-
               <TableBody>
-                {jobcards.map((jobcard, index) => (
-                  <TableRow key={jobcard.id || index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      {jobcard.createdAt
-                        ? new Date(jobcard.createdAt).toLocaleDateString(
+                {jobcards.map((jobcard, index) => {
+                  const deliveries = jobcard.deliveries || [];
+                  const jobcardBalanceStatus = getJobcardBalanceStatus(jobcard);
+                  const jobcardNumericalBalance =
+                    getJobcardNumericalBalance(jobcard);
+                  const totalRecord = getTotalRecordForJobcard(jobcard, index);
+                  const runningBalance = calculateRunningBalance(
+                    jobcard,
+                    index
+                  );
+
+                  if (deliveries.length === 0) {
+                    return (
+                      <TableRow key={`jobcard-${jobcard.id}`}>
+                        <TableCell align="center">{index + 1}</TableCell>
+                        <TableCell align="center">
+                          {new Date(jobcard.createdAt).toLocaleDateString(
                             "en-IN"
-                          )
-                        : "-"}
-                    </TableCell>
-                    <TableCell>{jobcard.description || "-"}</TableCell>
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          {jobcard.description || "-"}
+                        </TableCell>
+                        <TableCell align="center">
+                          {jobcard.weight ?? "-"}
+                        </TableCell>
+                        <TableCell align="center">
+                          {jobcard.touch ?? "-"}
+                        </TableCell>
+                        <TableCell align="center">
+                          {jobcard.purity?.toFixed(3) ?? "-"}
+                        </TableCell>
+                        <TableCell align="center">
+                          {totalRecord?.openingBalance?.toFixed(3) || "0.000"}
+                        </TableCell>
+                        <TableCell align="center">
+                          {runningBalance.toFixed(3)}
+                        </TableCell>
+                        <TableCell align="center">-</TableCell>
+                        <TableCell align="center">-</TableCell>
+                        <TableCell align="center">-</TableCell>
+                        <TableCell align="center">-</TableCell>
+                        <TableCell align="center">-</TableCell>
+                        <TableCell align="center">-</TableCell>
+                        <TableCell align="center">
+                          {jobcardBalanceStatus}
+                        </TableCell>
+                        <TableCell align="center">
+                          {jobcardNumericalBalance}
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            onClick={() => handleEditJobcard(jobcard)}
+                          >
+                            <Visibility color="primary" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
 
-                    <TableCell>{jobcard.weight ?? "-"}</TableCell>
-                    <TableCell>{jobcard.touch ?? "-"}</TableCell>
-                    <TableCell>{jobcard.purity.toFixed(3) ?? "-"}</TableCell>
-                    <TableCell>
-                      {jobcard.totalRecord?.openingBalance.toFixed
-                      (3) ?? "-"}
-                    </TableCell>
-                    <TableCell>
-                      {jobcard.totalRecord?.totalBalance.toFixed(3) ?? "-"}
-                    </TableCell>
-
-                    <TableCell>{jobcard.itemName || "-"}</TableCell>
-                    <TableCell>{jobcard.itemWeight ?? "-"}</TableCell>
-
-                    <TableCell>{jobcard.totalStoneWeight ?? "-"}</TableCell>
-                    <TableCell>{jobcard.wastage ?? "-"}</TableCell>
-                    <TableCell>{jobcard.balanceOwedBy || "-"}</TableCell>
-                    <TableCell>{jobcard.balance ?? "-"}</TableCell>
-                    <TableCell align="center">
-                      <IconButton onClick={() => handleEditJobcard(jobcard)}>
-                        <Visibility color="primary" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  return deliveries.map((delivery, i) => (
+                    <TableRow key={`jobcard-${jobcard.id}-delivery-${i}`}>
+                      {i === 0 && (
+                        <>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {index + 1}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {new Date(jobcard.createdAt).toLocaleDateString(
+                              "en-IN"
+                            )}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {jobcard.description || "-"}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {jobcard.weight ?? "-"}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {jobcard.touch ?? "-"}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {jobcard.purity?.toFixed(3) ?? "-"}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {totalRecord?.openingBalance?.toFixed(3) || "0.000"}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {runningBalance.toFixed(3)}
+                          </TableCell>
+                        </>
+                      )}
+                      <TableCell align="center">{delivery.itemName}</TableCell>
+                      <TableCell align="center">
+                        {delivery.itemWeight?.toFixed(3) || "-"}
+                      </TableCell>
+                      <TableCell align="center">
+                        {delivery.stoneWeight?.toFixed(3) || "-"}
+                      </TableCell>
+                      <TableCell align="center">
+                        {delivery.wastageValue?.toFixed(3) || "-"}
+                      </TableCell>
+                      <TableCell align="center">
+                        {calculateNetWeight(delivery)}
+                      </TableCell>
+                      <TableCell align="center">
+                        {delivery.finalPurity?.toFixed(3) || "0.000"}
+                      </TableCell>
+                      {i === 0 && (
+                        <>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {jobcardBalanceStatus}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            {jobcardNumericalBalance}
+                          </TableCell>
+                          <TableCell align="center" rowSpan={deliveries.length}>
+                            <IconButton
+                              onClick={() => handleEditJobcard(jobcard)}
+                            >
+                              <Visibility color="primary" />
+                            </IconButton>
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ));
+                })}
               </TableBody>
-            </Table>
+            </Table> 
+        
+          
           </Paper>
         )}
       </Paper>
@@ -269,3 +407,11 @@ const GoldsmithDetails = () => {
 };
 
 export default GoldsmithDetails;
+
+
+
+
+
+
+
+
