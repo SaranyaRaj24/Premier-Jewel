@@ -21,8 +21,7 @@ const NewJobCard = ({
   artisanId,
   goldsmithName,
 }) => {
-
-  const [assignmentId, setAssignmentId] = useState(null); 
+  const [assignmentId, setAssignmentId] = useState(null);
   const [description, setDescription] = useState("");
   const [goldRows, setGoldRows] = useState([
     { id: null, weight: "", touch: "", purity: "" },
@@ -35,6 +34,7 @@ const NewJobCard = ({
       wastageValue: "",
       wastageType: "Touch",
       deductions: [{ id: null, type: "Stone", customType: "", weight: "" }],
+      finalPurity: 0,
     },
   ]);
   const [receivedMetalReturns, setReceivedMetalReturns] = useState([
@@ -76,78 +76,118 @@ const NewJobCard = ({
     fetchMasterItems();
   }, []);
 
+  const calculatePurity = (w, t) =>
+    !isNaN(w) && !isNaN(t)
+      ? ((parseFloat(w) * parseFloat(t)) / 100).toFixed(3)
+      : "";
+
+  const recalculateFinalPurity = (item) => {
+    const totalItemDeductions = item.deductions.reduce(
+      (sum, deduction) => sum + parseFloat(deduction.weight || 0),
+      0
+    );
+    const itemNetWeightCalc = parseFloat(item.weight || 0) - totalItemDeductions;
+    const wastageValue = parseFloat(item.wastageValue || 0);
+    
+    if (item.wastageType === "Touch") {
+      return (itemNetWeightCalc * wastageValue) / 100;
+    } else if (item.wastageType === "%") {
+      return itemNetWeightCalc + (itemNetWeightCalc * wastageValue) / 100;
+    } else if (item.wastageType === "+") {
+      return itemNetWeightCalc + wastageValue;
+    }
+    return 0;
+  };
+
   useEffect(() => {
     if (initialData) {
-      setAssignmentId(initialData.id); 
+      setAssignmentId(initialData.id);
       setDescription(initialData.description || "");
       setDisplayDate(
         initialData.createdAt
           ? new Date(initialData.createdAt).toLocaleDateString("en-IN")
           : new Date().toLocaleDateString("en-IN")
       );
+
       setGoldRows([
         {
-          id: initialData.id, 
-          weight:
-            initialData.weight !== undefined ? String(initialData.weight) : "",
-          touch:
-            initialData.touch !== undefined ? String(initialData.touch) : "",
+          id: initialData.id,
+          weight: initialData.weight !== undefined ? String(initialData.weight) : "",
+          touch: initialData.touch !== undefined ? String(initialData.touch) : "",
           purity: calculatePurity(initialData.weight, initialData.touch),
         },
       ]);
-      const deductionsFromInitial = [];
-      if (
-        initialData.totalStoneWeight !== undefined &&
-        initialData.totalStoneWeight !== null
-      ) {
-        deductionsFromInitial.push({
-          id: initialData.id,
-          type: "Stone",
-          customType: "",
-          weight: String(initialData.totalStoneWeight),
-        });
-      }
-    
-      if (deductionsFromInitial.length === 0) {
-        deductionsFromInitial.push({
-          id: null,
-          type: "Stone",
-          customType: "",
-          weight: "",
-        });
-      }
 
-      setItemRows([
-        {
-          id: initialData.id,
+      const mappedItemRows = initialData.deliveries.map((delivery) => {
+        const itemWeight = parseFloat(delivery.itemWeight || 0);
+        const stoneWeight = parseFloat(delivery.stoneWeight || 0);
+        const wastageValue = parseFloat(delivery.wastageValue || 0);
+        let finalPurity = 0;
+
+        if (delivery.wastageType === "Touch") {
+          finalPurity = ((itemWeight - stoneWeight) * wastageValue) / 100;
+        } else if (delivery.wastageType === "%") {
+          finalPurity = itemWeight - stoneWeight + ((itemWeight - stoneWeight) * wastageValue) / 100;
+        } else if (delivery.wastageType === "+") {
+          finalPurity = itemWeight - stoneWeight + wastageValue;
+        }
+
+        return {
+          id: delivery.id,
           weight:
-            initialData.itemWeight !== undefined
-              ? String(initialData.itemWeight)
+            delivery.itemWeight !== undefined
+              ? String(delivery.itemWeight)
               : "",
-          name: initialData.itemName || "",
-          
+          name: delivery.itemName || "",
           wastageValue:
-            initialData.wastage !== undefined
-              ? String(initialData.wastage)
+            delivery.wastageValue !== undefined
+              ? String(delivery.wastageValue)
               : "",
-       
-          wastageType: initialData.wastageType || "Touch", 
-          deductions: deductionsFromInitial,
-        },
-      ]);
-      setReceivedMetalReturns([
-        { id: null, weight: "", touch: "", purity: "" }, 
-      ]);
-      if (
-        initialData.totalRecord &&
-        initialData.totalRecord.openingBalance !== undefined
-      ) {
-        setOpeningBalance(parseFloat(initialData.totalRecord.openingBalance));
-      } else {
-        fetchOpeningBalance(artisanId);
+          wastageType: delivery.wastageType || "Touch",
+          deductions: [
+            {
+              id: delivery.id,
+              type: "Stone",
+              customType: "",
+              weight:
+                delivery.stoneWeight !== undefined
+                  ? String(delivery.stoneWeight)
+                  : "",
+            },
+          ],
+          finalPurity: delivery.finalPurity || 0,
+        };
+      });
+
+      setItemRows(
+        mappedItemRows.length > 0
+          ? mappedItemRows
+          : [
+              {
+                id: null,
+                weight: "",
+                name: "",
+                wastageValue: "",
+                wastageType: "Touch",
+                deductions: [
+                  { id: null, type: "Stone", customType: "", weight: "" },
+                ],
+                finalPurity: 0,
+              },
+            ]
+      );
+
+      const initialReceivedReturns = initialData.receivedMetalReturns || [
+        { id: null, weight: "", touch: "", purity: "" },
+      ];
+      setReceivedMetalReturns(initialReceivedReturns);
+
+      if (initialData.totalRecord) {
+        setOpeningBalance(
+          parseFloat(initialData.totalRecord.openingBalance || 0)
+        );
       }
     } else {
-     
       setAssignmentId(null);
       setDescription("");
       setGoldRows([{ id: null, weight: "", touch: "", purity: "" }]);
@@ -159,20 +199,14 @@ const NewJobCard = ({
           wastageValue: "",
           wastageType: "Touch",
           deductions: [{ id: null, type: "Stone", customType: "", weight: "" }],
+          finalPurity: 0,
         },
       ]);
-      setReceivedMetalReturns([
-        { id: null, weight: "", touch: "", purity: "" },
-      ]);
+      setReceivedMetalReturns([{ id: null, weight: "", touch: "", purity: "" }]);
       setDisplayDate(new Date().toLocaleDateString("en-IN"));
-    
+      setOpeningBalance(0);
     }
-  }, [initialData, artisanId]); 
-
-  const calculatePurity = (w, t) =>
-    !isNaN(w) && !isNaN(t)
-      ? ((parseFloat(w) * parseFloat(t)) / 100).toFixed(3)
-      : "";
+  }, [initialData, artisanId]);
 
   const handleGoldRowChange = (i, field, val) => {
     const copy = [...goldRows];
@@ -187,12 +221,14 @@ const NewJobCard = ({
   const handleItemRowChange = (i, field, val) => {
     const updated = [...itemRows];
     updated[i][field] = val;
+    updated[i].finalPurity = recalculateFinalPurity(updated[i]);
     setItemRows(updated);
   };
 
   const handleDeductionChange = (itemIndex, deductionIndex, field, val) => {
     const updated = [...itemRows];
     updated[itemIndex].deductions[deductionIndex][field] = val;
+    updated[itemIndex].finalPurity = recalculateFinalPurity(updated[itemIndex]);
     setItemRows(updated);
   };
 
@@ -205,6 +241,7 @@ const NewJobCard = ({
     );
     setReceivedMetalReturns(copy);
   };
+
   const totalInputPurityGiven = goldRows.reduce(
     (sum, row) => sum + parseFloat(row.purity || 0),
     0
@@ -227,26 +264,10 @@ const NewJobCard = ({
 
   const netWeight = format(totalItemWeight - totalDeductionWeight);
 
-  const totalFinishedPurity = itemRows.reduce((sum, item) => {
-    const totalItemDeductions = item.deductions.reduce(
-      (dSum, deduction) => dSum + parseFloat(deduction.weight || 0),
-      0
-    );
-    const itemNetWeightCalc =
-      parseFloat(item.weight || 0) - totalItemDeductions;
-    const wastageValue = parseFloat(item.wastageValue || 0);
-    let itemFinalPurity = 0;
-
-    if (item.wastageType === "Touch") {
-      itemFinalPurity = (itemNetWeightCalc * wastageValue) / 100;
-    } else if (item.wastageType === "%") {
-      itemFinalPurity =
-        itemNetWeightCalc + (itemNetWeightCalc * wastageValue) / 100;
-    } else if (item.wastageType === "+") {
-      itemFinalPurity = itemNetWeightCalc + wastageValue;
-    }
-    return sum + itemFinalPurity;
-  }, 0);
+  const totalFinishedPurity = itemRows.reduce(
+    (sum, item) => sum + parseFloat(item.finalPurity || 0),
+    0
+  );
 
   const totalReceivedPurity = receivedMetalReturns.reduce(
     (sum, row) => sum + parseFloat(row.purity || 0),
@@ -260,133 +281,110 @@ const NewJobCard = ({
     totalFromGoldsmith - totalGivenToGoldsmith
   );
 
-
   const isEditing = assignmentId !== null;
   const isItemDeliveryEnabled = isEditing;
   const isReceivedSectionEnabled = isEditing;
 
-const handleSave = async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
-    setMessage("");
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setMessage("");
 
-    const jobcardPayload = {
-      goldsmithId: artisanId,
-      description: description,
-      weight: parseFloat(goldRows[0]?.weight || 0),
-      touch: parseFloat(goldRows[0]?.touch || 0),
-      purity: parseFloat(goldRows[0]?.purity || 0),
-      openingBalance: openingBalance,
-      totalPurity: totalInputPurityGiven,
-      totalBalance: totalGivenToGoldsmith,
-    };
-
-    if (!isEditing) {
-    
-      const jobcardResponse = await fetch(
-        `${BACKEND_SERVER_URL}/api/assignments/create`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(jobcardPayload),
-        }
-      );
-
-      if (!jobcardResponse.ok) {
-        const errorData = await jobcardResponse.json();
-        throw new Error(errorData.message || "Failed to create jobcard");
-      }
-
-      const jobcardData = await jobcardResponse.json();
-      setMessage("Jobcard created successfully!");
-
-      if (onSave) {
-        onSave({
-          jobcard: {
-            ...jobcardPayload,
-            id: jobcardData.id,
-            createdAt: new Date().toISOString(),
-          },
-          totalRecord: {
-            openingBalance: openingBalance,
-            totalBalance: totalGivenToGoldsmith,
-          },
-        });
-      }
-    }
- 
-    else {
+      const jobcardPayload = {
+        goldsmithId: artisanId,
+        description: description,
+        weight: parseFloat(goldRows[0]?.weight || 0),
+        touch: parseFloat(goldRows[0]?.touch || 0),
+        purity: parseFloat(goldRows[0]?.purity || 0),
+        openingBalance: openingBalance,
+        totalPurity: totalInputPurityGiven,
+        totalBalance: totalGivenToGoldsmith,
      
+      };
+
+      let jobcardId = initialData?.id;
+      if (!isEditing) {
+        const jobcardResponse = await fetch(
+          `${BACKEND_SERVER_URL}/api/assignments/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(jobcardPayload),
+          }
+        );
+        if (!jobcardResponse.ok) {
+          const errorData = await jobcardResponse.json();
+          throw new Error(errorData.message || "Failed to create job card");
+        }
+        const jobcardData = await jobcardResponse.json();
+        jobcardId = jobcardData.jobcard.id;
+        setMessage("Job card created successfully!");
+      }
+
       const itemsPayload = itemRows
         .filter((item) => parseFloat(item.weight || 0) > 0)
-        .map((item) => {
-          const totalDeductions = item.deductions.reduce(
+        .map((item) => ({
+          itemName: item.name,
+          itemWeight: parseFloat(item.weight || 0),
+          type: "Jewelry",
+          stoneWeight: item.deductions.reduce(
             (sum, deduction) => sum + parseFloat(deduction.weight || 0),
             0
-          );
-
-          return {
-            itemName: item.name,
-            itemWeight: parseFloat(item.weight || 0),
-            type: "Jewelry",
-            stoneWeight: totalDeductions,
-            wastageType: item.wastageType,
-            wastageValue: parseFloat(item.wastageValue || 0),
-          };
-        });
+          ),
+          wastageType: item.wastageType,
+          wastageValue: parseFloat(item.wastageValue || 0),
+          finalPurity: parseFloat(item.finalPurity || 0),
+        }));
 
       if (itemsPayload.length > 0) {
         const itemDeliveryResponse = await fetch(
           `${BACKEND_SERVER_URL}/api/assignments/item-deliveries`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               goldsmithId: artisanId,
-              jobcardId: initialData.id, 
+              jobcardId: jobcardId,
               items: itemsPayload,
             }),
           }
         );
-
         if (!itemDeliveryResponse.ok) {
-          throw new Error("Failed to save item deliveries");
+          const errorData = await itemDeliveryResponse.json();
+          throw new Error(errorData.error || "Failed to save item deliveries");
         }
+        setMessage("Item deliveries saved successfully!");
       }
-
-      setMessage("Item deliveries saved successfully!");
 
       if (onSave) {
         onSave({
           jobcard: {
-            ...initialData,
+            ...(isEditing ? initialData : jobcardPayload),
+            id: jobcardId,
             itemName: itemRows[0]?.name || "",
             itemWeight: parseFloat(itemRows[0]?.weight || 0),
             totalStoneWeight: totalDeductionWeight,
             wastage: parseFloat(itemRows[0]?.wastageValue || 0),
             wastageType: itemRows[0]?.wastageType || "Touch",
+            finalPurity: parseFloat(itemRows[0]?.finalPurity || 0),
           },
           totalRecord: {
             openingBalance: openingBalance,
             totalBalance: totalGivenToGoldsmith,
+            newBalance: totalFromGoldsmith - totalGivenToGoldsmith,
           },
         });
       }
-    }
 
-    onClose();
-  } catch (err) {
-    console.error("Save failed:", err);
-    setError(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      onClose();
+    } catch (err) {
+      console.error("Save failed:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Dialog
@@ -443,7 +441,7 @@ const handleSave = async () => {
               rows="3"
               className="textarea"
               placeholder="Enter job Description...."
-              disabled={isLoading || isEditing} 
+              disabled={isLoading || isEditing}
             />
           </div>
 
@@ -459,7 +457,7 @@ const handleSave = async () => {
                     handleGoldRowChange(i, "weight", e.target.value)
                   }
                   className="input"
-                  disabled={isLoading || isEditing} 
+                  disabled={isLoading || isEditing}
                   onWheel={(e) => e.target.blur()}
                 />
                 <span className="operator">x</span>
@@ -472,7 +470,7 @@ const handleSave = async () => {
                   }
                   onWheel={(e) => e.target.blur()}
                   className="input"
-                  disabled={isLoading || isEditing} 
+                  disabled={isLoading || isEditing}
                 />
                 <span className="operator">=</span>
                 <input
@@ -492,7 +490,7 @@ const handleSave = async () => {
                 ])
               }
               className="circle-button"
-              disabled={isLoading || isEditing} 
+              disabled={isLoading || isEditing}
             >
               +
             </button>
@@ -526,6 +524,7 @@ const handleSave = async () => {
               </div>
             </div>
           </div>
+
           <div
             className="section"
             style={{
@@ -552,18 +551,6 @@ const handleSave = async () => {
                 );
                 const itemNetWeightCalc =
                   parseFloat(item.weight || 0) - totalItemDeductions;
-                const wastageValue = parseFloat(item.wastageValue || 0);
-                let finalPurity = 0;
-
-                if (item.wastageType === "Touch") {
-                  finalPurity = (itemNetWeightCalc * wastageValue) / 100;
-                } else if (item.wastageType === "%") {
-                  finalPurity =
-                    itemNetWeightCalc +
-                    (itemNetWeightCalc * wastageValue) / 100;
-                } else if (item.wastageType === "+") {
-                  finalPurity = itemNetWeightCalc + wastageValue;
-                }
 
                 return (
                   <div
@@ -698,7 +685,7 @@ const handleSave = async () => {
                     <input
                       type="text"
                       readOnly
-                      value={format(itemNetWeightCalc)} 
+                      value={format(itemNetWeightCalc)}
                       className="input-small input-read-only"
                     />
 
@@ -738,7 +725,7 @@ const handleSave = async () => {
                     />
 
                     <span className="final-purity-value">
-                      {format(finalPurity)}
+                      {format(item.finalPurity)}
                     </span>
                   </div>
                 );
@@ -762,6 +749,7 @@ const handleSave = async () => {
                           weight: "",
                         },
                       ],
+                      finalPurity: 0,
                     },
                   ]);
                 }}
@@ -858,7 +846,6 @@ const handleSave = async () => {
             </div>
           </div>
 
-           
           {parseFloat(totalGivenToGoldsmith) !== 0 && (
             <div className="final-balance-section">
               <h3 className="section-title">Final Balance</h3>
@@ -932,11 +919,3 @@ const handleSave = async () => {
 };
 
 export default NewJobCard;
-
-
-
-
-
-
-
-
