@@ -98,6 +98,7 @@ const getJobcardsByGoldsmithId = async (req, res) => {
     });
   }
 };
+
 const createItemDeliveries = async (req, res) => {
   try {
     const { goldsmithId, jobcardId, items } = req.body;
@@ -190,9 +191,123 @@ const createItemDeliveries = async (req, res) => {
       .json({ error: "Internal server error during item delivery creation" });
   }
 };
+const createReceivedSection = async (req, res) => {
+  try {
+    const { weight, touch, goldsmithId, jobcardId } = req.body;
+    if (!weight || !touch || !goldsmithId || !jobcardId) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "All fields (weight, touch, goldsmithId, jobcardId) are required",
+      });
+    }
+    const weightNum = parseFloat(weight);
+    const touchNum = parseFloat(touch);
+    const goldsmithIdNum = parseInt(goldsmithId);
+    const jobcardIdNum = parseInt(jobcardId);
+
+    if (
+      isNaN(weightNum) ||
+      isNaN(touchNum) ||
+      isNaN(goldsmithIdNum) ||
+      isNaN(jobcardIdNum)
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid numeric values provided",
+      });
+    }
+    const purity = (weightNum * touchNum) / 100;
+
+    const jobcardExists = await prisma.jobcard.findUnique({
+      where: { id: jobcardIdNum },
+    });
+
+    if (!jobcardExists) {
+      return res.status(404).json({
+        success: false,
+        error: "Jobcard not found",
+      });
+    }
+    const goldsmithExists = await prisma.goldsmith.findUnique({
+      where: { id: goldsmithIdNum },
+    });
+
+    if (!goldsmithExists) {
+      return res.status(404).json({
+        success: false,
+        error: "Goldsmith not found",
+      });
+    }
+    const receivedSection = await prisma.receivedsection.create({
+      data: {
+        weight: weightNum,
+        touch: touchNum,
+        purity: purity,
+        jobcard: { connect: { id: jobcardIdNum } },
+        goldsmith: { connect: { id: goldsmithIdNum } },
+      },
+      include: {
+        jobcard: true,
+        goldsmith: true,
+      },
+    });
+
+    const existingBalance = await prisma.balances.findFirst({
+      where: { goldsmithId: goldsmithIdNum },
+    });
+
+    if (existingBalance) {
+      await prisma.balances.update({
+        where: { id: existingBalance.id },
+        data: {
+          totalReceivedWeight: { increment: weightNum },
+          totalReceivedPurity: { increment: purity },
+          totalReceivedTouch: { increment: touchNum },
+        },
+      });
+    } else {
+      await prisma.balances.create({
+        data: {
+          goldsmithId: goldsmithIdNum,
+          totalReceivedWeight: weightNum,
+          totalReceivedPurity: purity,
+          totalReceivedTouch: touchNum,
+          totalDeliveries: 0,
+          totalItemWeight: 0,
+          totalNetWeight: 0,
+          totalPurity: 0,
+        },
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: receivedSection,
+      message: "Received section created successfully",
+    });
+  } catch (error) {
+    console.error("Error creating received section:", error);
+    if (error.code === "P2002") {
+      return res.status(400).json({
+        success: false,
+        error: "This jobcard already has a received section record",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      details: error.message,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
 
 module.exports = {
   createJobcard,
   getJobcardsByGoldsmithId,
   createItemDeliveries,
+  createReceivedSection,
 };

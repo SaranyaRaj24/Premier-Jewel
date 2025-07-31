@@ -286,107 +286,132 @@ const NewJobCard = ({
   const isReceivedSectionEnabled = isEditing;
 
   const handleSave = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setMessage("");
+  try {
+    setIsLoading(true);
+    setError(null);
+    setMessage("");
 
-      const jobcardPayload = {
-        goldsmithId: artisanId,
-        description: description,
-        weight: parseFloat(goldRows[0]?.weight || 0),
-        touch: parseFloat(goldRows[0]?.touch || 0),
-        purity: parseFloat(goldRows[0]?.purity || 0),
-        openingBalance: openingBalance,
-        totalPurity: totalInputPurityGiven,
-        totalBalance: totalGivenToGoldsmith,
-     
-      };
+    const jobcardPayload = {
+      goldsmithId: artisanId,
+      description: description,
+      weight: parseFloat(goldRows[0]?.weight || 0),
+      touch: parseFloat(goldRows[0]?.touch || 0),
+      purity: parseFloat(goldRows[0]?.purity || 0),
+      openingBalance: openingBalance,
+      totalPurity: totalInputPurityGiven,
+      totalBalance: totalGivenToGoldsmith,
+    };
 
-      let jobcardId = initialData?.id;
-      if (!isEditing) {
-        const jobcardResponse = await fetch(
-          `${BACKEND_SERVER_URL}/api/assignments/create`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(jobcardPayload),
-          }
-        );
-        if (!jobcardResponse.ok) {
-          const errorData = await jobcardResponse.json();
-          throw new Error(errorData.message || "Failed to create job card");
+    let jobcardId = initialData?.id;
+    if (!isEditing) {
+      const jobcardResponse = await fetch(
+        `${BACKEND_SERVER_URL}/api/assignments/create`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jobcardPayload),
         }
-        const jobcardData = await jobcardResponse.json();
-        jobcardId = jobcardData.jobcard.id;
-        setMessage("Job card created successfully!");
+      );
+      if (!jobcardResponse.ok) {
+        const errorData = await jobcardResponse.json();
+        throw new Error(errorData.message || "Failed to create job card");
       }
-
-      const itemsPayload = itemRows
-        .filter((item) => parseFloat(item.weight || 0) > 0)
-        .map((item) => ({
-          itemName: item.name,
-          itemWeight: parseFloat(item.weight || 0),
-          type: "Jewelry",
-          stoneWeight: item.deductions.reduce(
-            (sum, deduction) => sum + parseFloat(deduction.weight || 0),
-            0
-          ),
-          wastageType: item.wastageType,
-          wastageValue: parseFloat(item.wastageValue || 0),
-          finalPurity: parseFloat(item.finalPurity || 0),
-        }));
-
-      if (itemsPayload.length > 0) {
-        const itemDeliveryResponse = await fetch(
-          `${BACKEND_SERVER_URL}/api/assignments/item-deliveries`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              goldsmithId: artisanId,
-              jobcardId: jobcardId,
-              items: itemsPayload,
-            }),
-          }
-        );
-        if (!itemDeliveryResponse.ok) {
-          const errorData = await itemDeliveryResponse.json();
-          throw new Error(errorData.error || "Failed to save item deliveries");
-        }
-        setMessage("Item deliveries saved successfully!");
-      }
-
-      if (onSave) {
-        onSave({
-          jobcard: {
-            ...(isEditing ? initialData : jobcardPayload),
-            id: jobcardId,
-            itemName: itemRows[0]?.name || "",
-            itemWeight: parseFloat(itemRows[0]?.weight || 0),
-            totalStoneWeight: totalDeductionWeight,
-            wastage: parseFloat(itemRows[0]?.wastageValue || 0),
-            wastageType: itemRows[0]?.wastageType || "Touch",
-            finalPurity: parseFloat(itemRows[0]?.finalPurity || 0),
-          },
-          totalRecord: {
-            openingBalance: openingBalance,
-            totalBalance: totalGivenToGoldsmith,
-            newBalance: totalFromGoldsmith - totalGivenToGoldsmith,
-          },
-        });
-      }
-
-      onClose();
-    } catch (err) {
-      console.error("Save failed:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      const jobcardData = await jobcardResponse.json();
+      jobcardId = jobcardData.jobcard.id;
+      setMessage("Job card created successfully!");
     }
-  };
+    const itemsPayload = itemRows
+      .filter((item) => parseFloat(item.weight || 0) > 0)
+      .map((item) => ({
+        itemName: item.name,
+        itemWeight: parseFloat(item.weight || 0),
+        type: "Jewelry",
+        stoneWeight: item.deductions.reduce(
+          (sum, deduction) => sum + parseFloat(deduction.weight || 0),
+          0
+        ),
+        wastageType: item.wastageType,
+        wastageValue: parseFloat(item.wastageValue || 0),
+        finalPurity: parseFloat(item.finalPurity || 0),
+      }));
 
-  return (
+    if (itemsPayload.length > 0) {
+      const itemDeliveryResponse = await fetch(
+        `${BACKEND_SERVER_URL}/api/assignments/item-deliveries`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            goldsmithId: artisanId,
+            jobcardId: jobcardId,
+            items: itemsPayload,
+          }),
+        }
+      );
+      if (!itemDeliveryResponse.ok) {
+        const errorData = await itemDeliveryResponse.json();
+        throw new Error(errorData.error || "Failed to save item deliveries");
+      }
+      setMessage("Item deliveries saved successfully!");
+    }
+
+const receivedPayload = receivedMetalReturns
+  .filter(
+    (item) =>
+      parseFloat(item.weight || 0) > 0 && parseFloat(item.touch || 0) > 0
+  )
+  .map((item) => ({
+    weight: parseFloat(item.weight),
+    touch: parseFloat(item.touch),
+    goldsmithId: artisanId,
+    jobcardId: jobcardId,
+  }));
+
+if (receivedPayload.length > 0) {
+  const receivedResponse = await fetch(
+    `${BACKEND_SERVER_URL}/api/assignments/received-section`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(receivedPayload[0]), 
+    }
+  );
+  if (!receivedResponse.ok) {
+    const errorData = await receivedResponse.json();
+    throw new Error(errorData.error || "Failed to save received metal returns");
+  }
+  setMessage("Received metal returns saved successfully!");
+}
+    if (onSave) {
+      onSave({
+        jobcard: {
+          ...(isEditing ? initialData : jobcardPayload),
+          id: jobcardId,
+          itemName: itemRows[0]?.name || "",
+          itemWeight: parseFloat(itemRows[0]?.weight || 0),
+          totalStoneWeight: totalDeductionWeight,
+          wastage: parseFloat(itemRows[0]?.wastageValue || 0),
+          wastageType: itemRows[0]?.wastageType || "Touch",
+          finalPurity: parseFloat(itemRows[0]?.finalPurity || 0),
+        },
+        totalRecord: {
+          openingBalance: openingBalance,
+          totalBalance: totalGivenToGoldsmith,
+          newBalance: totalFromGoldsmith - totalGivenToGoldsmith,
+        },
+        receivedMetalReturns: receivedPayload,
+      });
+    }
+
+    onClose();
+  } catch (err) {
+    console.error("Save failed:", err);
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+return (
     <Dialog
       open={true}
       onClose={onClose}

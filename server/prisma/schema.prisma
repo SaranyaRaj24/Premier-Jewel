@@ -138,6 +138,7 @@ model Goldsmith {
   jobcards   Jobcard[]       
   totals     Total[]         
   deliveries itemDelivery[]   
+  received   Receivedsection[]
   summaries  Balances[]       
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @default(now())
@@ -152,6 +153,7 @@ model Jobcard {
   touch         Float
   purity        Float
   deliveries    itemDelivery[]  
+  received      Receivedsection[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @default(now())
 }
@@ -190,6 +192,10 @@ model Receivedsection {
   weight      Float
   touch       Float
   purity      Float
+  jobcardId   Int?    
+  goldsmithId Int?
+  jobcard     Jobcard?  @relation(fields: [jobcardId], references: [id])
+  goldsmith   Goldsmith? @relation(fields: [goldsmithId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now())
 }
