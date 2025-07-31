@@ -105,19 +105,41 @@ const calculateFinalPurity = (delivery) => {
     setOpenJobcardDialog(false);
     setSelectedJobcard(null);
   };
+  // const getJobcardBalance = (jobcard) => {
+  //   const givenPurity = jobcard.purity || 0;
+  //   let receivedPurity = 0;
+
+  //   if (jobcard.deliveries && jobcard.deliveries.length > 0) {
+  //     jobcard.deliveries.forEach((delivery) => {
+  //       receivedPurity += delivery.finalPurity || 0;
+  //     });
+  //   }
+
+  //   return givenPurity - receivedPurity;
+  // };
+
+
   const getJobcardBalance = (jobcard) => {
-    const givenPurity = jobcard.purity || 0;
-    let receivedPurity = 0;
+  const givenPurity = jobcard.purity || 0;
+  let deliveredPurity = 0; 
+  let receivedPurityFromGoldsmith = 0; 
 
-    if (jobcard.deliveries && jobcard.deliveries.length > 0) {
-      jobcard.deliveries.forEach((delivery) => {
-        receivedPurity += delivery.finalPurity || 0;
+  if (jobcard.deliveries && jobcard.deliveries.length > 0) {
+    jobcard.deliveries.forEach((delivery) => {
+      deliveredPurity += delivery.finalPurity || 0;
+    });
+  }
+  if (jobcard.receivedSection) {
+    if (Array.isArray(jobcard.receivedSection)) {
+      jobcard.receivedSection.forEach((received) => {
+        receivedPurityFromGoldsmith += received.purity || 0;
       });
+    } else {
+      receivedPurityFromGoldsmith = jobcard.receivedSection.purity || 0;
     }
-
-    return givenPurity - receivedPurity;
-  };
-
+  }
+  return givenPurity - deliveredPurity + receivedPurityFromGoldsmith;
+};
   const getJobcardBalanceStatus = (jobcard) => {
     const balance = getJobcardBalance(jobcard);
     if (balance > 0) return "Goldsmith";
