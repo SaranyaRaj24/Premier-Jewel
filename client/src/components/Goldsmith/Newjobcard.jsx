@@ -23,6 +23,8 @@ const NewJobCard = ({
 }) => {
   const [assignmentId, setAssignmentId] = useState(null);
   const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const [goldRows, setGoldRows] = useState([
     { id: null, weight: "", touch: "", purity: "" },
   ]);
@@ -285,25 +287,28 @@ const NewJobCard = ({
   const isItemDeliveryEnabled = isEditing;
   const isReceivedSectionEnabled = isEditing;
 
-  const handleSave = async () => {
+const handleSave = async () => {
+  setIsLoading(true);
+  setError(null);
+  setMessage("");
+
+  let jobcardId = initialData?.id;
+  let jobcardPayload;
+
   try {
-    setIsLoading(true);
-    setError(null);
-    setMessage("");
-
-    const jobcardPayload = {
-      goldsmithId: artisanId,
-      description: description,
-      weight: parseFloat(goldRows[0]?.weight || 0),
-      touch: parseFloat(goldRows[0]?.touch || 0),
-      purity: parseFloat(goldRows[0]?.purity || 0),
-      openingBalance: openingBalance,
-      totalPurity: totalInputPurityGiven,
-      totalBalance: totalGivenToGoldsmith,
-    };
-
-    let jobcardId = initialData?.id;
+    
     if (!isEditing) {
+      jobcardPayload = {
+        goldsmithId: artisanId,
+        description: description,
+        weight: parseFloat(goldRows[0]?.weight || 0),
+        touch: parseFloat(goldRows[0]?.touch || 0),
+        purity: parseFloat(goldRows[0]?.purity || 0),
+        openingBalance: openingBalance,
+        totalPurity: totalInputPurityGiven,
+        totalBalance: totalGivenToGoldsmith,
+      };
+
       const jobcardResponse = await fetch(
         `${BACKEND_SERVER_URL}/api/assignments/create`,
         {
@@ -312,13 +317,34 @@ const NewJobCard = ({
           body: JSON.stringify(jobcardPayload),
         }
       );
+
       if (!jobcardResponse.ok) {
-        const errorData = await jobcardResponse.json();
-        throw new Error(errorData.message || "Failed to create job card");
+        const errorText = await jobcardResponse.text();
+        let errorMessage = `Failed to create job card. Status: ${jobcardResponse.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error("Server responded with non-JSON error:", errorText);
+        }
+        throw new Error(errorMessage);
       }
+
       const jobcardData = await jobcardResponse.json();
       jobcardId = jobcardData.jobcard.id;
       setMessage("Job card created successfully!");
+    } else {
+    
+      jobcardPayload = {
+        goldsmithId: artisanId,
+        description: description,
+        weight: parseFloat(goldRows[0]?.weight || 0),
+        touch: parseFloat(goldRows[0]?.touch || 0),
+        purity: parseFloat(goldRows[0]?.purity || 0),
+        openingBalance: openingBalance,
+        totalPurity: totalInputPurityGiven,
+        totalBalance: totalGivenToGoldsmith,
+      };
     }
     const itemsPayload = itemRows
       .filter((item) => parseFloat(item.weight || 0) > 0)
@@ -335,7 +361,9 @@ const NewJobCard = ({
         finalPurity: parseFloat(item.finalPurity || 0),
       }));
 
-    if (itemsPayload.length > 0) {
+    const deliveriesExist = isEditing && initialData?.deliveries?.length > 0;
+
+    if (itemsPayload.length > 0 && !deliveriesExist) {
       const itemDeliveryResponse = await fetch(
         `${BACKEND_SERVER_URL}/api/assignments/item-deliveries`,
         {
@@ -348,40 +376,59 @@ const NewJobCard = ({
           }),
         }
       );
+
       if (!itemDeliveryResponse.ok) {
-        const errorData = await itemDeliveryResponse.json();
-        throw new Error(errorData.error || "Failed to save item deliveries");
+        const errorText = await itemDeliveryResponse.text();
+        let errorMessage = `Failed to save item deliveries. Status: ${itemDeliveryResponse.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error("Server responded with non-JSON error:", errorText);
+        }
+        throw new Error(errorMessage);
       }
-      setMessage("Item deliveries saved successfully!");
+      setMessage(`Item deliveries saved successfully!`);
+    }
+    const receivedPayload = receivedMetalReturns
+      .filter(
+        (item) =>
+          parseFloat(item.weight || 0) > 0 && parseFloat(item.touch || 0) > 0
+      )
+      .map((item) => ({
+        weight: parseFloat(item.weight),
+        touch: parseFloat(item.touch),
+        goldsmithId: artisanId,
+        jobcardId: jobcardId,
+      }));
+
+    const receivedSectionExists =
+      isEditing && initialData?.received?.length > 0;
+
+    if (receivedPayload.length > 0 && !receivedSectionExists) {
+      const receivedResponse = await fetch(
+        `${BACKEND_SERVER_URL}/api/assignments/received-section`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(receivedPayload[0]),
+        }
+      );
+
+      if (!receivedResponse.ok) {
+        const errorText = await receivedResponse.text();
+        let errorMessage = `Failed to save received metal returns. Status: ${receivedResponse.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error("Server responded with non-JSON error:", errorText);
+        }
+        throw new Error(errorMessage);
+      }
+      setMessage(`Received metal returns saved successfully!`);
     }
 
-const receivedPayload = receivedMetalReturns
-  .filter(
-    (item) =>
-      parseFloat(item.weight || 0) > 0 && parseFloat(item.touch || 0) > 0
-  )
-  .map((item) => ({
-    weight: parseFloat(item.weight),
-    touch: parseFloat(item.touch),
-    goldsmithId: artisanId,
-    jobcardId: jobcardId,
-  }));
-
-if (receivedPayload.length > 0) {
-  const receivedResponse = await fetch(
-    `${BACKEND_SERVER_URL}/api/assignments/received-section`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(receivedPayload[0]), 
-    }
-  );
-  if (!receivedResponse.ok) {
-    const errorData = await receivedResponse.json();
-    throw new Error(errorData.error || "Failed to save received metal returns");
-  }
-  setMessage("Received metal returns saved successfully!");
-}
     if (onSave) {
       onSave({
         jobcard: {
