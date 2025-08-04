@@ -72,7 +72,12 @@ const getJobcardsByGoldsmithId = async (req, res) => {
         createdAt: "desc",
       },
       include: {
-        deliveries: true,
+        deliveries: {
+          orderBy: { createdAt: "asc" },
+        },
+        received: {
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
@@ -100,6 +105,7 @@ const getJobcardsByGoldsmithId = async (req, res) => {
 };
 
 const createItemDeliveries = async (req, res) => {
+  console.log("created items", req.body);
   try {
     const { goldsmithId, jobcardId, items } = req.body;
 
@@ -125,18 +131,19 @@ const createItemDeliveries = async (req, res) => {
 
       let finalPurity;
       let wastageTypeEnum;
-
       switch (item.wastageType) {
         case "Touch":
-          finalPurity = parsedWastageValue;
+          finalPurity = item.finalPurity ?? parsedWastageValue;
           wastageTypeEnum = "TOUCH";
           break;
         case "%":
-          finalPurity = netWeight + (parsedWastageValue / 100) * netWeight;
+          finalPurity =
+            item.finalPurity ??
+            netWeight + (parsedWastageValue / 100) * netWeight;
           wastageTypeEnum = "PERCENTAGE";
           break;
         case "+":
-          finalPurity = netWeight + parsedWastageValue;
+          finalPurity = item.finalPurity ?? netWeight + parsedWastageValue;
           wastageTypeEnum = "FIXED";
           break;
         default:
@@ -144,10 +151,11 @@ const createItemDeliveries = async (req, res) => {
             `Backend: Invalid wastage type received: ${item.wastageType}`
           );
           wastageTypeEnum = "TOUCH";
-          finalPurity = parsedWastageValue;
+          finalPurity = item.finalPurity ?? parsedWastageValue;
       }
 
       try {
+        console.log("Passed final purity", finalPurity);
         const entry = await prisma.itemDelivery.create({
           data: {
             itemName: item.itemName,
@@ -162,11 +170,7 @@ const createItemDeliveries = async (req, res) => {
             goldsmithId: parseInt(goldsmithId),
           },
         });
-        console.log(
-          "Backend: Successfully created item delivery:",
-          entry.id,
-          entry.itemName
-        );
+        console.log(" item delivery testtttttt:", entry);
         createdItems.push(entry);
       } catch (dbError) {
         console.error(
@@ -193,6 +197,7 @@ const createItemDeliveries = async (req, res) => {
 };
 const createReceivedSection = async (req, res) => {
   try {
+    console.log("Received details", req.body);
     const { weight, touch, goldsmithId, jobcardId } = req.body;
     if (!weight || !touch || !goldsmithId || !jobcardId) {
       return res.status(400).json({

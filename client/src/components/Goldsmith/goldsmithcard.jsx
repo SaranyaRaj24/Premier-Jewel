@@ -16,6 +16,7 @@ import {
   Divider,
   Box,
   CircularProgress,
+  Alert,
 } from "@mui/material";
 import { Add, Visibility } from "@mui/icons-material";
 import NewJobCard from "../Goldsmith/Newjobcard";
@@ -24,7 +25,7 @@ import { BACKEND_SERVER_URL } from "../../Config/Config";
 const GoldsmithDetails = () => {
   const { id, name } = useParams();
   const location = useLocation();
-    const [error, setError] = useState(null);
+  const [error, setError] = useState(null);
   const { phone, address } = location.state || {};
 
   const [openJobcardDialog, setOpenJobcardDialog] = useState(false);
@@ -36,13 +37,20 @@ const GoldsmithDetails = () => {
   const fetchJobcards = useCallback(async () => {
     try {
       setLoadingJobcards(true);
-      const res = await fetch(`${BACKEND_SERVER_URL}/api/assignments/goldsmith/${id}`);
+      const res = await fetch(
+        `${BACKEND_SERVER_URL}/api/assignments/goldsmith/${id}`
+      );
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
+      console.log("Fetched jobcard data:", data);
 
       if (data.success) {
-        const sortedJobcards = [...(data.jobcards || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        const sortedTotalRecords = [...(data.totalRecords || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const sortedJobcards = [...(data.jobcards || [])].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        const sortedTotalRecords = [...(data.totalRecords || [])].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
         setJobcards(sortedJobcards);
         setTotalRecords(sortedTotalRecords);
       } else {
@@ -55,9 +63,9 @@ const GoldsmithDetails = () => {
       setJobcards([]);
       setTotalRecords([]);
       setLoadingJobcards(false);
+      setError("Failed to fetch job cards. Please try again.");
     }
   }, [id]);
-
 
   useEffect(() => {
     if (id) fetchJobcards();
@@ -68,33 +76,34 @@ const GoldsmithDetails = () => {
     setOpenJobcardDialog(true);
   };
 
-const handleEditJobcard = (jobcard) => {
-  const enhancedJobcard = {
-    ...jobcard,
-    deliveries: (jobcard.deliveries || []).map((delivery) => ({
-      ...delivery,
-      finalPurity: delivery.finalPurity || calculateFinalPurity(delivery),
-    })),
+  const handleEditJobcard = (jobcard) => {
+    const enhancedJobcard = {
+      ...jobcard,
+      deliveries: (jobcard.deliveries || []).map((delivery) => ({
+        ...delivery,
+        finalPurity: delivery.finalPurity || calculateFinalPurity(delivery),
+      })),
+      received: jobcard.received || [], 
+    };
+    setSelectedJobcard(enhancedJobcard);
+    setOpenJobcardDialog(true);
   };
-  setSelectedJobcard(enhancedJobcard);
-  setOpenJobcardDialog(true);
-};
 
-const calculateFinalPurity = (delivery) => {
-  const itemWeight = parseFloat(delivery.itemWeight || 0);
-  const stoneWeight = parseFloat(delivery.stoneWeight || 0);
-  const wastageValue = parseFloat(delivery.wastageValue || 0);
-  const netWeight = itemWeight - stoneWeight;
+  const calculateFinalPurity = (delivery) => {
+    const itemWeight = parseFloat(delivery.itemWeight || 0);
+    const stoneWeight = parseFloat(delivery.stoneWeight || 0);
+    const wastageValue = parseFloat(delivery.wastageValue || 0);
+    const netWeight = itemWeight - stoneWeight;
 
-  if (delivery.wastageType === "Touch") {
-    return (netWeight * wastageValue) / 100;
-  } else if (delivery.wastageType === "%") {
-    return netWeight + (netWeight * wastageValue) / 100;
-  } else if (delivery.wastageType === "+") {
-    return netWeight + wastageValue;
-  }
-  return 0;
-};
+    if (delivery.wastageType === "Touch") {
+      return (netWeight * wastageValue) / 100;
+    } else if (delivery.wastageType === "%") {
+      return netWeight + (netWeight * wastageValue) / 100;
+    } else if (delivery.wastageType === "+") {
+      return netWeight + wastageValue;
+    }
+    return 0;
+  };
 
   const handleSaveJobcard = () => {
     fetchJobcards();
@@ -105,41 +114,27 @@ const calculateFinalPurity = (delivery) => {
     setOpenJobcardDialog(false);
     setSelectedJobcard(null);
   };
-  // const getJobcardBalance = (jobcard) => {
-  //   const givenPurity = jobcard.purity || 0;
-  //   let receivedPurity = 0;
-
-  //   if (jobcard.deliveries && jobcard.deliveries.length > 0) {
-  //     jobcard.deliveries.forEach((delivery) => {
-  //       receivedPurity += delivery.finalPurity || 0;
-  //     });
-  //   }
-
-  //   return givenPurity - receivedPurity;
-  // };
-
 
   const getJobcardBalance = (jobcard) => {
-  const givenPurity = jobcard.purity || 0;
-  let deliveredPurity = 0; 
-  let receivedPurityFromGoldsmith = 0; 
+    const givenPurity = jobcard.purity || 0;
+    let deliveredPurity = 0;
+    let receivedPurityFromGoldsmith = 0;
 
-  if (jobcard.deliveries && jobcard.deliveries.length > 0) {
-    jobcard.deliveries.forEach((delivery) => {
-      deliveredPurity += delivery.finalPurity || 0;
-    });
-  }
-  if (jobcard.receivedSection) {
-    if (Array.isArray(jobcard.receivedSection)) {
-      jobcard.receivedSection.forEach((received) => {
+    if (jobcard.deliveries && jobcard.deliveries.length > 0) {
+      jobcard.deliveries.forEach((delivery) => {
+        deliveredPurity += delivery.finalPurity || 0;
+      });
+    }
+
+    if (jobcard.received && Array.isArray(jobcard.received)) {
+      jobcard.received.forEach((received) => {
         receivedPurityFromGoldsmith += received.purity || 0;
       });
-    } else {
-      receivedPurityFromGoldsmith = jobcard.receivedSection.purity || 0;
     }
-  }
-  return givenPurity - deliveredPurity + receivedPurityFromGoldsmith;
-};
+
+    return givenPurity - deliveredPurity + receivedPurityFromGoldsmith;
+  };
+
   const getJobcardBalanceStatus = (jobcard) => {
     const balance = getJobcardBalance(jobcard);
     if (balance > 0) return "Goldsmith";
@@ -165,7 +160,6 @@ const calculateFinalPurity = (delivery) => {
     const totalRecord = getTotalRecordForJobcard(jobcard, index);
     return totalRecord?.totalBalance || 0;
   };
-
 
   return (
     <Container maxWidth="xxl" sx={{ py: 3 }}>
@@ -234,8 +228,8 @@ const calculateFinalPurity = (delivery) => {
             </Typography>
           </Paper>
         ) : (
-          <Paper elevation={2}>
-             <Table sx={{ minWidth: 1200 }}>
+          <Paper elevation={2} sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: 1500 }}>
               <TableHead
                 sx={{
                   backgroundColor: "#e3f2fd",
@@ -259,6 +253,7 @@ const calculateFinalPurity = (delivery) => {
                   <TableCell rowSpan={2}>Wastage</TableCell>
                   <TableCell rowSpan={2}>Net WT</TableCell>
                   <TableCell rowSpan={2}>Final Purity</TableCell>
+                  <TableCell colSpan={3}>Received Gold</TableCell>
                   <TableCell rowSpan={2}>Balance Owed By</TableCell>
                   <TableCell rowSpan={2}>Balance</TableCell>
                   <TableCell rowSpan={2}>Actions</TableCell>
@@ -269,127 +264,120 @@ const calculateFinalPurity = (delivery) => {
                   <TableCell>Purity</TableCell>
                   <TableCell>Item Name</TableCell>
                   <TableCell>Item Weight</TableCell>
+                  <TableCell>Weight</TableCell>
+                  <TableCell>Touch</TableCell>
+                  <TableCell>Purity</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {jobcards.map((jobcard, index) => {
                   const deliveries = jobcard.deliveries || [];
-                  const jobcardBalanceStatus = getJobcardBalanceStatus(jobcard);
-                  const jobcardNumericalBalance =
-                    getJobcardNumericalBalance(jobcard);
+                  const received = jobcard.received || [];
+                  const maxRows = Math.max(
+                    deliveries.length,
+                    received.length,
+                    1
+                  );
                   const totalRecord = getTotalRecordForJobcard(jobcard, index);
                   const runningBalance = calculateRunningBalance(
                     jobcard,
                     index
                   );
+                  const jobcardBalanceStatus = getJobcardBalanceStatus(jobcard);
+                  const jobcardNumericalBalance =
+                    getJobcardNumericalBalance(jobcard);
 
-                  if (deliveries.length === 0) {
-                    return (
-                      <TableRow key={`jobcard-${jobcard.id}`}>
-                        <TableCell align="center">{index + 1}</TableCell>
-                        <TableCell align="center">
-                          {new Date(jobcard.createdAt).toLocaleDateString(
-                            "en-IN"
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          {jobcard.description || "-"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {jobcard.weight ?? "-"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {jobcard.touch ?? "-"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {jobcard.purity?.toFixed(3) ?? "-"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {totalRecord?.openingBalance?.toFixed(3) || "0.000"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {runningBalance.toFixed(3)}
-                        </TableCell>
-                        <TableCell align="center">-</TableCell>
-                        <TableCell align="center">-</TableCell>
-                        <TableCell align="center">-</TableCell>
-                        <TableCell align="center">-</TableCell>
-                        <TableCell align="center">-</TableCell>
-                        <TableCell align="center">-</TableCell>
-                        <TableCell align="center">
-                          {jobcardBalanceStatus}
-                        </TableCell>
-                        <TableCell align="center">
-                          {jobcardNumericalBalance}
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            onClick={() => handleEditJobcard(jobcard)}
-                          >
-                            <Visibility color="primary" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-
-                  return deliveries.map((delivery, i) => (
-                    <TableRow key={`jobcard-${jobcard.id}-delivery-${i}`}>
+                  return [...Array(maxRows)].map((_, i) => (
+                    <TableRow key={`jobcard-${jobcard.id}-row-${i}`}>
                       {i === 0 && (
                         <>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {index + 1}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {new Date(jobcard.createdAt).toLocaleDateString(
                               "en-IN"
                             )}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {jobcard.description || "-"}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {jobcard.weight ?? "-"}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {jobcard.touch ?? "-"}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {jobcard.purity?.toFixed(3) ?? "-"}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {totalRecord?.openingBalance?.toFixed(3) || "0.000"}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {runningBalance.toFixed(3)}
                           </TableCell>
                         </>
                       )}
-                      <TableCell align="center">{delivery.itemName}</TableCell>
-                      <TableCell align="center">
-                        {delivery.itemWeight?.toFixed(3) || "-"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {delivery.stoneWeight?.toFixed(3) || "-"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {delivery.wastageValue?.toFixed(3) || "-"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {calculateNetWeight(delivery)}
-                      </TableCell>
-                      <TableCell align="center">
-                        {delivery.finalPurity?.toFixed(3) || "0.000"}
-                      </TableCell>
+                      {deliveries[i] ? (
+                        <>
+                          <TableCell align="center">
+                            {deliveries[i].itemName}
+                          </TableCell>
+                          <TableCell align="center">
+                            {deliveries[i].itemWeight?.toFixed(3) || "-"}
+                          </TableCell>
+                          <TableCell align="center">
+                            {deliveries[i].stoneWeight?.toFixed(3) || "-"}
+                          </TableCell>
+                          <TableCell align="center">
+                            {deliveries[i].wastageValue?.toFixed(3) || "-"}
+                          </TableCell>
+                          <TableCell align="center">
+                            {calculateNetWeight(deliveries[i])}
+                          </TableCell>
+                          <TableCell align="center">
+                            {deliveries[i].finalPurity?.toFixed(3) || "0.000"}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                        </>
+                      )}
+                      {received[i] ? (
+                        <>
+                          <TableCell align="center">
+                            {received[i].weight?.toFixed(3) || "-"}
+                          </TableCell>
+                          <TableCell align="center">
+                            {received[i].touch?.toFixed(3) || "-"}
+                          </TableCell>
+                          <TableCell align="center">
+                            {received[i].purity?.toFixed(3) || "-"}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                          <TableCell align="center">-</TableCell>
+                        </>
+                      )}
                       {i === 0 && (
                         <>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {jobcardBalanceStatus}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             {jobcardNumericalBalance}
                           </TableCell>
-                          <TableCell align="center" rowSpan={deliveries.length}>
+                          <TableCell align="center" rowSpan={maxRows}>
                             <IconButton
                               onClick={() => handleEditJobcard(jobcard)}
                             >
@@ -402,9 +390,7 @@ const calculateFinalPurity = (delivery) => {
                   ));
                 })}
               </TableBody>
-            </Table> 
-        
-          
+            </Table>
           </Paper>
         )}
       </Paper>
@@ -429,11 +415,3 @@ const calculateFinalPurity = (delivery) => {
 };
 
 export default GoldsmithDetails;
-
-
-
-
-
-
-
-

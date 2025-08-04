@@ -92,28 +92,6 @@ const Goldsmith = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this goldsmith?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(`${BACKEND_SERVER_URL}/api/goldsmith/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setGoldsmith((prev) => prev.filter((g) => g.id !== id));
-        toast.success("Goldsmith deleted successfully");
-      } else {
-        toast.error("Failed to delete goldsmith");
-      }
-    } catch (error) {
-      toast.error(responseData.message);
-
-    }
-  };
-
   const filteredGoldsmith = goldsmith.filter((gs) => {
     const nameMatch =
       gs.name && gs.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -127,7 +105,7 @@ const Goldsmith = () => {
     <Container maxWidth="md">
       <Paper className="customer-details-container" elevation={3} sx={{ p: 3 }}>
         <Typography variant="h5" align="center" gutterBottom>
-          Goldsmith Details
+         Goldsmith Details
         </Typography>
 
         <TextField
@@ -217,19 +195,13 @@ const Goldsmith = () => {
                       />
                     </Tooltip>
 
-                    {/* <Tooltip title="Delete">
-                      <DeleteIcon
-                        style={{ cursor: "pointer", color: "#d32f2f" }}
-                        onClick={() => handleDelete(goldsmith.id)}
-                      />
-                    </Tooltip> */}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={4} align="center">
-                  No goldsmith details available.
+               No goldsmith details available...
                 </TableCell>
               </TableRow>
             )}
@@ -279,7 +251,7 @@ const Goldsmith = () => {
             variant="contained"
             color="primary"
           >
-            Save
+           Save
           </Button>
         </DialogActions>
       </Dialog>
