@@ -60,6 +60,7 @@ const createJobcard = async (req, res) => {
   }
 };
 
+
 const getJobcardsByGoldsmithId = async (req, res) => {
   try {
     const { goldsmithId } = req.params;
