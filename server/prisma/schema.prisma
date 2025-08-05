@@ -139,6 +139,7 @@ model Goldsmith {
   totals     Total[]         
   deliveries itemDelivery[]   
   received   Receivedsection[]
+  repairs    Repair[]
   summaries  Balances[]       
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @default(now())
@@ -219,4 +220,19 @@ enum WastageType {
   PERCENTAGE @map("%")
   ADDITION   @map("+")
   TOUCH      @map("Touch")
+}
+
+model Repair {
+  id            Int        @id @default(autoincrement())
+  goldsmithId   Int
+  goldsmith     Goldsmith  @relation(fields: [goldsmithId], references: [id])
+  givenWeights  Json
+  totalGiven    Float
+  itemWeights   Json
+  totalItem     Float
+  stone         Float
+  wastageType   String
+  touch         Float
+  netWeight     Float
+  createdAt     DateTime   @default(now())
 }
