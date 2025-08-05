@@ -26,7 +26,7 @@ import { BACKEND_SERVER_URL } from "../../Config/Config";
 
 const Repair = () => {
   const [open, setOpen] = useState(false);
-  const [selectedName, setSelectedName] = useState("");
+  const [selectedGoldsmithId, setSelectedGoldsmithId] = useState("");
   const [givenWeights, setGivenWeights] = useState([0]);
   const [itemWeights, setItemWeights] = useState([0]);
   const [showWastage, setShowWastage] = useState(false);
@@ -73,23 +73,67 @@ const Repair = () => {
         console.error("Error fetching goldsmith data:", error);
       }
     };
+
+    const fetchRepairs = async () => {
+      try {
+        const response = await fetch(`${BACKEND_SERVER_URL}/api/repair`);
+        const data = await response.json();
+        if (data.success) {
+          setRepairRecords(data.repairs);
+        }
+      } catch (error) {
+        console.error("Error fetching repairs:", error);
+      }
+    };
+
     fetchGoldsmiths();
+    fetchRepairs();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newRecord = {
-      name: selectedName,
+      goldsmithId: selectedGoldsmithId,
       givenWeights: [...givenWeights],
       totalGiven,
       itemWeights: [...itemWeights],
       totalItem,
-      stone: stoneValue,
+      stone: parseFloat(stoneValue),
       wastageType,
-      touch: multiInput2 || 0,
+      touch: parseFloat(multiInput2 || 0),
       netWeight,
     };
-    setRepairRecords([...repairRecords, newRecord]);
-    setOpen(false);
+
+    try {
+      const response = await fetch(`${BACKEND_SERVER_URL}/api/repair`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newRecord),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRepairRecords((prev) => [...prev, data.repair]);
+        setOpen(false);
+
+        setSelectedGoldsmithId("");
+        setGivenWeights([0]);
+        setItemWeights([0]);
+        setShowWastage(false);
+        setStoneValue(0);
+        setWastageType("");
+        setMultiInput1(0);
+        setMultiInput2("");
+        setNetWeight(0);
+      } else {
+        alert("Failed to save repair: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error saving error:", error);
+      alert("Something went wrong while saving.");
+    }
   };
 
   return (
@@ -112,7 +156,7 @@ const Repair = () => {
             }}
           >
             <TableRow>
-              <TableCell>Name</TableCell>
+              <TableCell>Goldsmith</TableCell>
               <TableCell>Total Given</TableCell>
               <TableCell>Total Item</TableCell>
               <TableCell>Stone</TableCell>
@@ -124,18 +168,19 @@ const Repair = () => {
           <TableBody>
             {repairRecords.map((record, index) => (
               <TableRow key={index}>
-                <TableCell>{record.name}</TableCell>
+                <TableCell>{record.goldsmith?.name || "—"}</TableCell>
                 <TableCell>{record.totalGiven}</TableCell>
                 <TableCell>{record.totalItem}</TableCell>
                 <TableCell>{record.stone}</TableCell>
                 <TableCell>{record.wastageType}</TableCell>
                 <TableCell>{record.touch}</TableCell>
-                <TableCell>{record.netWeight}</TableCell>
+                <TableCell>{record.netWeight.toFixed(3)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -164,12 +209,12 @@ const Repair = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Name</InputLabel>
             <Select
-              value={selectedName}
-              onChange={(e) => setSelectedName(e.target.value)}
+              value={selectedGoldsmithId}
+              onChange={(e) => setSelectedGoldsmithId(e.target.value)}
               label="Name"
             >
               {goldsmith.map((smith) => (
-                <MenuItem key={smith.id} value={smith.name}>
+                <MenuItem key={smith.id} value={smith.id}>
                   {smith.name}
                 </MenuItem>
               ))}
@@ -205,6 +250,7 @@ const Repair = () => {
               <strong>Total Given Weight:</strong> {totalGiven}
             </p>
           </div>
+
           <div className="weight-section">
             <div className="section-header">
               <strong>Item Weight</strong>
