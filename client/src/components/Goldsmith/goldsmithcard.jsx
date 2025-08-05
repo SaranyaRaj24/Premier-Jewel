@@ -83,7 +83,14 @@ const GoldsmithDetails = () => {
         ...delivery,
         finalPurity: delivery.finalPurity || calculateFinalPurity(delivery),
       })),
-      received: jobcard.received || [], 
+      receivedMetalReturns: (jobcard.received || []).map((receivedItem) => ({
+        ...receivedItem,
+        weight: receivedItem.weight || 0,
+        touch: receivedItem.touch || 0,
+        purity: receivedItem.purity || 0,
+        date: receivedItem.date || new Date().toISOString(),
+        description: receivedItem.description || "",
+      })),
     };
     setSelectedJobcard(enhancedJobcard);
     setOpenJobcardDialog(true);
@@ -132,7 +139,10 @@ const GoldsmithDetails = () => {
       });
     }
 
-    return givenPurity - deliveredPurity + receivedPurityFromGoldsmith;
+    const totalGivenToGoldsmith = givenPurity;
+    const totalReceivedFromGoldsmith =
+      deliveredPurity + receivedPurityFromGoldsmith;
+    return totalGivenToGoldsmith - totalReceivedFromGoldsmith;
   };
 
   const getJobcardBalanceStatus = (jobcard) => {
@@ -415,3 +425,10 @@ const GoldsmithDetails = () => {
 };
 
 export default GoldsmithDetails;
+
+
+
+
+
+
+

@@ -598,3 +598,27 @@
   min-width: 80px;
   padding: 0 8px;
 }
+
+
+.item-delivery-row, .received-section-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+.deduction-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 5px;
+  align-items: center;
+}
+.add-deduction-button, .remove-button {
+  padding: 0;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.section {
+  margin-bottom: 25px;
+}
