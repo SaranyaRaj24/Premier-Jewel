@@ -80,7 +80,7 @@ const JewelStockReport = () => {
         component="h1"
         sx={{ textAlign: "center", fontWeight: 600 }}
       >
-        Jewel Stock Report
+          Jewel Stock Report
       </Typography>
 
       <Box display="flex" alignItems="center" gap={2} mb={3} flexWrap="wrap">
@@ -115,12 +115,12 @@ const JewelStockReport = () => {
           onClick={handleReset}
           sx={{ minWidth: 100 }}
         >
-          Reset
+         Reset
         </Button>
       </Box>
 
       {filteredEntries.length === 0 ? (
-        <Typography>No matching entries found.</Typography>
+        <Typography>No</Typography>
       ) : (
         <Paper elevation={3}>
           <Table>
@@ -136,7 +136,7 @@ const JewelStockReport = () => {
               }}
             >
               <TableRow>
-                <TableCell>SI. No.</TableCell>
+                <TableCell>SI.No.</TableCell>
                 <TableCell>Jewel Name</TableCell>
                 <TableCell>Weight (g)</TableCell>
                 <TableCell>Stone Wt. (g)</TableCell>
@@ -177,7 +177,7 @@ const JewelStockReport = () => {
                     color: "black",
                   }}
                 >
-                  Total Purity:
+              Total Purity:
                 </TableCell>
                 <TableCell
                   sx={{
